@@ -3,6 +3,7 @@ from torch import Tensor
 from torch.nn import Module
 
 class PositionalEncoding(Module):
+    #TODO: Apply NN positional encoding
     def __init__(self, max_seq_len: int, d_model: int = 512) -> None:
         super().__init__()
         self.d_model = d_model
