@@ -17,17 +17,18 @@ class MultiHeadAttention(Module):
     def forward(self, q: Tensor, k: Tensor, v: Tensor, mask: Tensor):
         q, k, v = self.w_q(q), self.w_k(k), self.w_v(v)
         q, k, v = self._split(q), self._split(k), self._split(v)
-        attn, attn_scores = self.sdp_attn(q, k, v, mask=mask)
+        attn = self.sdp_attn(q, k, v, mask=mask)
         attn = self._concat(attn)
         attn = self.linear_concat(attn)
-        return attn, attn_scores
+        
+        return attn
       
     def _split(self, x: Tensor):
         batch_size, length, _ = x.size()
         assert self.d_model % self.n_heads == 0, "Division of d_model to n_heads has remainder"
         d_head = self.d_model // self.n_heads
         x = x.view(batch_size, length, self.n_heads, d_head).transpose(1, 2)
-        
+      
         return x   
       
     def _concat(self, x: Tensor):
@@ -50,4 +51,4 @@ class ScaledDotProductAttention(Module):
         attn_scores = self.softmax(attn_scores, dim=-1)
         v = torch.matmul(self.dropout(attn_scores), v)
         
-        return v, attn_scores
+        return v

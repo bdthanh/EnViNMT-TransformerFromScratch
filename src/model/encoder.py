@@ -1,0 +1,42 @@
+import torch 
+from copy import deepcopy
+from torch import Tensor
+from torch.nn import Dropout, Module, ModuleList
+from src.components.layer_normalization import LayerNormalization
+from src.components.multi_head_attention import MultiHeadAttention
+from src.components.position_wise_feed_forward import PositionWiseFeedForward
+from src.components.positional_encoding import PositionalEncoding 
+
+class EncoderLayer(Module):
+    def __init__(self, d_model: int = 512, d_ff: int = 2048, n_heads: int = 8, 
+                 dropout: float = 0.1, eps: float = 1e-10) -> None:
+        super().__init__()
+        self.self_attn = MultiHeadAttention(d_model=d_model, n_heads=n_heads, dropout=dropout)
+        self.self_attn_layer_norm = LayerNormalization(d_model=d_model, eps=eps)
+        self.self_attn_dropout = Dropout(p=dropout)
+        self.feed_fwd = PositionWiseFeedForward(d_model=d_model, d_ff=d_ff, dropout=dropout)
+        self.feed_fwd_layer_norm = LayerNormalization(d_model=d_model, eps=eps)
+        self.feed_fwd_dropout = Dropout(p=dropout)
+        
+    def forward(self, x: Tensor, mask: Tensor):
+        _x = self.self_attn(x, x, x, mask)
+        x = self.self_attn_layer_norm(x + self.self_attn_dropout(_x))
+        _x = self.feed_fwd(x)
+        x = self.feed_fwd_layer_norm(x + self.feed_fwd_dropout(_x))
+        
+        return x 
+      
+class Encoder(Module):
+    def __init__(self, d_model: int = 512, d_ff: int = 2048, n_heads: int = 8, n_layers: int = 6, 
+                 dropout: float = 0.1, eps: float = 1e-10, max_seq_len: int = 100) -> None:
+        super().__init__()
+        self.pos_encoding = PositionalEncoding(max_seq_len=max_seq_len, d_model=d_model)
+        single_layer = EncoderLayer(d_model=d_model, d_ff=d_ff, n_heads=n_heads, dropout=dropout, eps=eps)
+        self.encoder_layers = ModuleList([deepcopy(single_layer) for _ in range(n_layers)])
+        
+    def forward(self, x: Tensor, mask: Tensor):
+        for layer in self.encoder_layers:
+            x = layer(x, mask)
+        return x 
+        
+        
