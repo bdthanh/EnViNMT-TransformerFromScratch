@@ -18,11 +18,11 @@ class Decoder(Module):
         self.decoder_layers = ModuleList([deepcopy(single_layer) for _ in range(n_layers)])
         self.linear = Linear(d_model)
         
-    def forward(self, trg: Tensor, x_enc: Tensor, mask: Tensor):
+    def forward(self, trg: Tensor, x_enc: Tensor, src_mask: Tensor, trg_mask: Tensor):
         x = self.embedding(trg)
         x = self.pos_encoding(x)
         for layer in self.decoder_layers:
-            x = layer(x, x_enc, mask)
+            x = layer(x, x_enc, src_mask, trg_mask)
         x = self.linear(x)
         
         return x 
@@ -43,12 +43,12 @@ class DecoderLayer(Module):
         self.feed_fwd_layer_norm = LayerNormalization(d_model=d_model, eps=eps)
         self.feed_fwd_dropout = Dropout(p=dropout)
         
-    def forward(self, x: Tensor, x_enc: Tensor, mask: Tensor):
-        _x = self.masked_self_attn(x, x, x, mask)
+    def forward(self, x: Tensor, x_enc: Tensor, src_mask: Tensor, trg_mask: Tensor):
+        _x = self.masked_self_attn(x, x, x, trg_mask)
         x = self.masked_self_attn_layer_norm(x+ self.masked_self_attn_dropout(_x))
         
         if x_enc is not None:
-            _x = self.masked_self_attn(q=x, k=x_enc, v=x_enc, mask=mask)
+            _x = self.masked_self_attn(q=x, k=x_enc, v=x_enc, mask=src_mask)
             x = self.masked_self_attn_layer_norm(x + self.masked_self_attn_dropout(_x))
         
         _x = self.feed_fwd(x)
