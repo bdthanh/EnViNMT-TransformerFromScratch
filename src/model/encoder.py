@@ -32,6 +32,7 @@ class EncoderLayer(Module):
         self.self_attn = MultiHeadAttention(d_model=d_model, n_heads=n_heads, dropout=dropout)
         self.self_attn_layer_norm = LayerNormalization(d_model=d_model, eps=eps)
         self.self_attn_dropout = Dropout(p=dropout)
+        
         self.feed_fwd = PositionWiseFeedForward(d_model=d_model, d_ff=d_ff, dropout=dropout)
         self.feed_fwd_layer_norm = LayerNormalization(d_model=d_model, eps=eps)
         self.feed_fwd_dropout = Dropout(p=dropout)
@@ -39,6 +40,7 @@ class EncoderLayer(Module):
     def forward(self, x: Tensor, mask: Tensor):
         _x = self.self_attn(x, x, x, mask)
         x = self.self_attn_layer_norm(x + self.self_attn_dropout(_x))
+        
         _x = self.feed_fwd(x)
         x = self.feed_fwd_layer_norm(x + self.feed_fwd_dropout(_x))
         

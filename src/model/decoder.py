@@ -2,23 +2,27 @@ import torch
 from copy import deepcopy
 from torch import Tensor
 from torch.nn import Linear, Dropout, Module, ModuleList
+from src.components.embedding import Embedding
 from src.components.layer_normalization import LayerNormalization
 from src.components.multi_head_attention import MultiHeadAttention
 from src.components.position_wise_feed_forward import PositionWiseFeedForward
 from src.components.positional_encoding import PositionalEncoding 
 
 class Decoder(Module):
-    def __init__(self, d_model: int = 512, d_ff: int = 2048, n_heads: int = 8, n_layers: int = 6, 
+    def __init__(self, vocab_size: int, d_model: int = 512, d_ff: int = 2048, n_heads: int = 8, n_layers: int = 6, 
                  dropout: float = 0.1, eps: float = 1e-10, max_seq_len: int = 100) -> None:
         super().__init__()
-        self.pos_encoding = PositionalEncoding(max_seq_len=max_seq_len, d_model=d_model)
+        self.embedding = Embedding(vocab_size=vocab_size, d_model=d_model)
+        self.pos_encoding = PositionalEncoding(max_seq_len=max_seq_len, d_model=d_model, dropout=dropout)
         single_layer = DecoderLayer(d_model=d_model, d_ff=d_ff, n_heads=n_heads, dropout=dropout, eps=eps)
         self.decoder_layers = ModuleList([deepcopy(single_layer) for _ in range(n_layers)])
         self.linear = Linear(d_model)
         
-    def forward(self, x: Tensor, mask: Tensor):
+    def forward(self, trg: Tensor, x_enc: Tensor, mask: Tensor):
+        x = self.embedding(trg)
+        x = self.pos_encoding(x)
         for layer in self.decoder_layers:
-            x = layer(x, mask)
+            x = layer(x, x_enc, mask)
         x = self.linear(x)
         
         return x 
