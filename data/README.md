@@ -1,0 +1,1 @@
+The IWSLT'15 English-Vietnamese data is used from Stanford NLP group: [Stanford NLP NMT](https://nlp.stanford.edu/projects/nmt/). It is a small English-Vietnamese dataset, containing around 133K sentence pairs.
