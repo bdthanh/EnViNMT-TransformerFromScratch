@@ -13,6 +13,7 @@ class EnViDataset(Dataset):
         self.sos_token = torch.tensor([trg_tokenizer.token_to_id('<sos>')], dtype=torch.int64)
         self.eos_token = torch.tensor([trg_tokenizer.token_to_id('<eos>')], dtype=torch.int64)
         self.pad_token = torch.tensor([trg_tokenizer.token_to_id('<pad>')], dtype=torch.int64)
+        self.unk_token = torch.tensor([trg_tokenizer.token_to_id('<unk>')], dtype=torch.int64)
     
     def __len__(self):
         assert len(self.src_dataset) == len(self.trg_dataset), 'Source and target dataset must have the same length'
