@@ -1,4 +1,3 @@
-import torch 
 from copy import deepcopy
 from torch import Tensor
 from torch.nn import Linear, Dropout, Module, ModuleList
