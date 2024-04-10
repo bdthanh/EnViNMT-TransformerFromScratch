@@ -2,11 +2,11 @@ import torch
 from copy import deepcopy
 from torch import Tensor
 from torch.nn import Linear, Dropout, Module, ModuleList
-from src.components.embedding import Embedding
-from src.components.layer_normalization import LayerNormalization
-from src.components.multi_head_attention import MultiHeadAttention
-from src.components.position_wise_feed_forward import PositionWiseFeedForward
-from src.components.positional_encoding import PositionalEncoding 
+from components.embedding import Embedding
+from components.layer_normalization import LayerNormalization
+from components.multi_head_attention import MultiHeadAttention
+from components.position_wise_feed_forward import PositionWiseFeedForward
+from components.positional_encoding import PositionalEncoding 
 
 class Decoder(Module):
     def __init__(self, vocab_size: int, d_model: int = 512, d_ff: int = 2048, n_heads: int = 8, n_layers: int = 6, 

@@ -55,7 +55,7 @@ class EnViDataset(Dataset):
             dim=0,
         )
 
-        # Add only <eos> token
+        # Add only <eos> token, label should be the same as decoder_input but shifted by one
         label = torch.cat(
             [
                 torch.tensor(dec_input_tokens, dtype=torch.int64),
