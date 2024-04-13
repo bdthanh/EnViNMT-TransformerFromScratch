@@ -2,7 +2,7 @@ import torch
 from typing import Any
 from torch.utils.data import Dataset
 
-class EnViDataset(Dataset):
+class ParallelDataset(Dataset):
     def __init__(self, src_dataset, trg_dataset, src_tokenizer, trg_tokenizer, seq_len) -> None:
         super().__init__()
         self.seq_len = seq_len

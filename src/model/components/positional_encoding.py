@@ -3,7 +3,6 @@ from torch import Tensor
 from torch.nn import Dropout, Module
 
 class PositionalEncoding(Module):
-    #TODO: Apply NN positional encoding
     def __init__(self, max_seq_len: int, d_model: int = 512, dropout: float = 0.1) -> None:
         super().__init__()
         self.d_model = d_model
