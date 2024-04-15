@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import spacy
 from underthesea import word_tokenize
-from src.dataset.parallel_vocabulary import Vocabulary, ParallelVocabulary
+from parallel_vocabulary import Vocabulary, ParallelVocabulary
 
 class BaseTokenizer(ABC):
 
@@ -43,7 +43,7 @@ class ViTokenizer(BaseTokenizer):
         if len(sentence) == 0:
             return list()
         else:
-            return word_tokenize(sentence, format="text")
+            return word_tokenize(sentence)
         
     def detokenize(self, tokens):
         return " ".join(tokens)
@@ -62,4 +62,13 @@ class EnTokenizer(BaseTokenizer):
         return " ".join(tokens)
       
 if __name__ == "__main__":
-    pass
+    vi_sentence = "Nó là một trò chơi ghép hình vẫn đang được xếp"
+    en_sentence = "It is a jigsaw puzzle still being put together"
+    vi_tokenizer = ViTokenizer()
+    en_tokenizer = EnTokenizer()
+    vi_tokenized = vi_tokenizer.tokenize(vi_sentence)
+    en_tokenized = en_tokenizer.tokenize(en_sentence)
+    print(vi_tokenized)
+    print(en_tokenized)
+        
+    
