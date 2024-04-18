@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-import os
 import spacy
 from underthesea import word_tokenize
 from vocabulary import Vocabulary

@@ -2,6 +2,7 @@ import torch
 from typing import Any
 from torch.utils.data import Dataset
 from tokenizer import BaseTokenizer
+
 class ParallelDataset(Dataset):
     def __init__(self, src_dataset, trg_dataset, src_tokenizer: BaseTokenizer, trg_tokenizer: BaseTokenizer, seq_len: int, min_freq: int = 1) -> None:
         super().__init__()
