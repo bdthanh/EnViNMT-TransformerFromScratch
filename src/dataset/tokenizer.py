@@ -38,6 +38,8 @@ class BaseTokenizer(ABC):
         
 
 class ViTokenizer(BaseTokenizer):
+    def __init__(self, vocab_fpath=None):
+        super().__init__(vocab_fpath)
 
     def tokenize(self, sentence):
         if len(sentence) == 0:
@@ -50,7 +52,6 @@ class ViTokenizer(BaseTokenizer):
 
 
 class EnTokenizer(BaseTokenizer):
-
     def __init__(self, vocab_fpath=None):
         super().__init__(vocab_fpath)
         self.spacy_en = spacy.load('en_core_web_sm')

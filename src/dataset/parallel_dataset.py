@@ -1,20 +1,20 @@
 import torch
 from typing import Any
 from torch.utils.data import Dataset
-
+from tokenizer import BaseTokenizer
 class ParallelDataset(Dataset):
-    def __init__(self, src_dataset, trg_dataset, src_tokenizer, trg_tokenizer, seq_len) -> None:
+    def __init__(self, src_dataset, trg_dataset, src_tokenizer: BaseTokenizer, trg_tokenizer: BaseTokenizer, seq_len) -> None:
         super().__init__()
         self.seq_len = seq_len
         self.src_dataset = src_dataset
         self.trg_dataset = trg_dataset
         self.src_tokenizer = src_tokenizer
         self.trg_tokenizer = trg_tokenizer
-        self.sos_token = torch.tensor([trg_tokenizer.token_to_id('<sos>')], dtype=torch.int64)
-        self.eos_token = torch.tensor([trg_tokenizer.token_to_id('<eos>')], dtype=torch.int64)
-        self.pad_token = torch.tensor([trg_tokenizer.token_to_id('<pad>')], dtype=torch.int64)
-        self.unk_token = torch.tensor([trg_tokenizer.token_to_id('<unk>')], dtype=torch.int64)
-    
+        # self.sos_token = torch.tensor([trg_tokenizer.token_to_id('<sos>')], dtype=torch.int64)
+        # self.eos_token = torch.tensor([trg_tokenizer.token_to_id('<eos>')], dtype=torch.int64)
+        # self.pad_token = torch.tensor([trg_tokenizer.token_to_id('<pad>')], dtype=torch.int64)
+        # self.unk_token = torch.tensor([trg_tokenizer.token_to_id('<unk>')], dtype=torch.int64)
+        
     def __len__(self):
         assert len(self.src_dataset) == len(self.trg_dataset), 'Source and target dataset must have the same length'
         return len(self.src_dataset)  
@@ -23,8 +23,10 @@ class ParallelDataset(Dataset):
         src_text = self.src_dataset[index]
         trg_text = self.trg_dataset[index]
         
-        enc_input_tokens = self.src_tokenizer.encode(src_text)
-        dec_input_tokens = self.trg_tokenizer.encode(trg_text)
+        enc_input_tokens = self.src_tokenizer.tokenize(src_text)
+        enc_input_tensor = self.src_tokenizer.vocab.sentence_to_tensor(enc_input_tokens)
+        dec_input_tokens = self.trg_tokenizer.tokenize(trg_text)
+        dec_input_tensor = self.trg_tokenizer.vocab.sentence_to_tensor(dec_input_tokens)
         
         # Add sos, eos and pad to each sentence
         enc_num_padding_tokens = self.seq_len - len(enc_input_tokens) - 2  # We will add <sos> and <eos>
@@ -37,10 +39,10 @@ class ParallelDataset(Dataset):
         # Add <sos> and <eos> token
         encoder_input = torch.cat(
             [
-                self.sos_token,
-                torch.tensor(enc_input_tokens, dtype=torch.int64),
-                self.eos_token,
-                torch.tensor([self.pad_token] * enc_num_padding_tokens, dtype=torch.int64),
+                self.src_tokenizer.vocab.sos_id,
+                enc_input_tensor,
+                self.src_tokenizer.vocab.eos_id,
+                torch.tensor([self.src_tokenizer.vocab.pad_id] * enc_num_padding_tokens, dtype=torch.int64),
             ],
             dim=0,
         )
@@ -48,9 +50,9 @@ class ParallelDataset(Dataset):
         # Add only <sos> token
         decoder_input = torch.cat(
             [
-                self.sos_token,
-                torch.tensor(dec_input_tokens, dtype=torch.int64),
-                torch.tensor([self.pad_token] * dec_num_padding_tokens, dtype=torch.int64),
+                self.src_tokenizer.vocab.sos_id,
+                dec_input_tensor,
+                torch.tensor([self.src_tokenizer.vocab.pad_id] * dec_num_padding_tokens, dtype=torch.int64),
             ],
             dim=0,
         )
@@ -58,9 +60,9 @@ class ParallelDataset(Dataset):
         # Add only <eos> token, label should be the same as decoder_input but shifted by one
         label = torch.cat(
             [
-                torch.tensor(dec_input_tokens, dtype=torch.int64),
-                self.eos_token,
-                torch.tensor([self.pad_token] * dec_num_padding_tokens, dtype=torch.int64),
+                dec_input_tensor,
+                self.src_tokenizer.vocab.eos_id,
+                torch.tensor([self.src_tokenizer.vocab.pad_id] * dec_num_padding_tokens, dtype=torch.int64),
             ],
             dim=0,
         )
