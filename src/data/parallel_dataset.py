@@ -4,15 +4,13 @@ from torch.utils.data import Dataset
 from tokenizer import BaseTokenizer
 
 class ParallelDataset(Dataset):
-    def __init__(self, src_dataset, trg_dataset, src_tokenizer: BaseTokenizer, trg_tokenizer: BaseTokenizer, seq_len: int, min_freq: int = 1) -> None:
+    def __init__(self, src_dataset, trg_dataset, src_tokenizer: BaseTokenizer, trg_tokenizer: BaseTokenizer, seq_len: int) -> None:
         super().__init__()
         self.seq_len = seq_len
         self.src_dataset = src_dataset
         self.trg_dataset = trg_dataset
         self.src_tokenizer = src_tokenizer
         self.trg_tokenizer = trg_tokenizer
-        self.src_tokenizer.build_vocab(src_dataset, is_tokenized=False, min_freq=min_freq)
-        self.trg_tokenizer.build_vocab(trg_dataset, is_tokenized=False, min_freq=min_freq)
         self.src_tokenized_ds = [self.src_tokenizer.tokenize(sentence) for sentence in self.src_dataset]
         self.trg_tokenized_ds = [self.trg_tokenizer.tokenize(sentence) for sentence in self.trg_dataset]
         

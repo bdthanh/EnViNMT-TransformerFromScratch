@@ -1,5 +1,9 @@
 import os
 import yaml
+import torch 
+
+def choose_device():
+    return 'cuda' if torch.cuda.is_available() else 'cpu'
 
 def create_if_missing_folder(path: str):
     """Create a folder if it does not exist.

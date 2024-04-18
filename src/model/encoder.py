@@ -9,7 +9,7 @@ from components.positional_encoding import PositionalEncoding
 
 class Encoder(Module):
     def __init__(self, vocab_size: int, d_model: int = 512, d_ff: int = 2048, n_heads: int = 8, n_layers: int = 6, 
-                 dropout: float = 0.1, eps: float = 1e-10, max_seq_len: int = 100) -> None:
+                 dropout: float = 0.1, eps: float = 1e-10, max_seq_len: int = 256) -> None:
         super().__init__()
         self.embedding = Embedding(vocab_size=vocab_size, d_model=d_model)
         self.pos_encoding = PositionalEncoding(max_seq_len=max_seq_len, d_model=d_model, dropout=dropout)

@@ -5,7 +5,7 @@ from encoder import Encoder
 
 class Transformer(Module):
     def __init__(self, src_vocab_size: int, trg_vocab_size: int, d_model: int = 512, d_ff: int = 2048, n_heads: int = 8, n_layers: int = 6, 
-                 dropout: float = 0.1, eps: float = 1e-10, max_seq_len: int = 100) -> None:
+                 dropout: float = 0.1, eps: float = 1e-10, max_seq_len: int = 256) -> None:
         super().__init__()
         self.encoder = Encoder(vocab_size=src_vocab_size, d_model=d_model, d_ff=d_ff, n_heads=n_heads, n_layers=n_layers, 
                                dropout=dropout, eps=eps, max_seq_len=max_seq_len)
