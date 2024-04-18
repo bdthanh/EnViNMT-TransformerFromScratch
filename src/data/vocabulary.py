@@ -32,7 +32,7 @@ class Vocabulary:
             self.id_to_token[self.token_to_id[token]] = token
             
     def sentence_to_tensor(self, tokenized_sent: List[str]):
-        return torch.tensor(list(map(lambda token: self.token_to_id[token], tokenized_sent)), dtype=torch.int64)
+        return torch.tensor(list(map(lambda token: self[token], tokenized_sent)), dtype=torch.int64)
       
     def corpus_to_tensors(self, tokenized_corpus):
         return [self.sentence_to_tensor(sentence) for sentence in tokenized_corpus]

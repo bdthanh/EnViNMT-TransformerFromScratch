@@ -36,20 +36,21 @@ def get_ds(config):
     max_len_src = 0
     max_len_tgt = 0
 
-    for item in ds_raw:
-        src_ids = src_tokenizer.encode(item['translation'][config['lang_src']]).ids
-        tgt_ids = trg_tokenizer.encode(item['translation'][config['lang_tgt']]).ids
+    assert len(train_src_dataset) == len(train_trg_dataset), 'Source and target dataset must have the same length'
+    
+    for i in range(len(train_src_dataset)):
+        src_ids = src_tokenizer.tokenize(train_src_dataset[i])
+        tgt_ids = trg_tokenizer.tokenize(train_trg_dataset[i])
         max_len_src = max(max_len_src, len(src_ids))
         max_len_tgt = max(max_len_tgt, len(tgt_ids))
 
     print(f'Max length of source sentence: {max_len_src}')
     print(f'Max length of target sentence: {max_len_tgt}')
-    
 
     train_dataloader = DataLoader(train_ds, batch_size=config['batch_size'], shuffle=True)
     val_dataloader = DataLoader(val_ds, batch_size=1, shuffle=True)
 
-    return train_dataloader, val_dataloader, tokenizer_src, tokenizer_tgt
+    return train_dataloader, val_dataloader, src_tokenizer, trg_tokenizer
 
 def train(config):
     device = choose_device()
