@@ -1,5 +1,8 @@
 import torch
 from typing import List
+from collections import Counter
+from itertools import chain 
+
 class Vocabulary:
     def __init__(self):
         self.unk_token = '<unk>'
@@ -40,5 +43,11 @@ class Vocabulary:
     def tensors_to_corpus(self, tensors):
         return [self.tensor_to_sentence(tensor) for tensor in tensors]
           
-    def add_tokens(self, sentences, min_freq=1, vocab_size=None):
-        pass
+    def add_tokens(self, tokenized_corpus, min_freq=1, vocab_size=None):
+        token_freq = Counter(chain(*tokenized_corpus))
+        freq_filter_tokens = [token for token in token_freq if token_freq[token] >= min_freq]
+        if vocab_size is not None: # limit the vocab size if specify
+            freq_filter_tokens = sorted(freq_filter_tokens, key=lambda token: token_freq[token], reverse=True)[:vocab_size]
+        for token in freq_filter_tokens:
+            self.add(token)
+        

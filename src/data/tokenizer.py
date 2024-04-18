@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import spacy
 from underthesea import word_tokenize
-from dataset.vocabulary import Vocabulary, ParallelVocabulary
+from vocabulary import Vocabulary
 
 class BaseTokenizer(ABC):
 
@@ -11,19 +11,20 @@ class BaseTokenizer(ABC):
             self.load_vocab(vocab_fpath)
 
     @abstractmethod
-    def tokenize(self, sent):
+    def tokenize(self, sentence):
         pass
     
     @abstractmethod
     def detokenize(self, tokens):
         pass
 
-    def build_vocab(self, sents, is_tokenized=False, min_freq=1, vocab_size=None):
+    def build_vocab(self, corpus, is_tokenized=False, min_freq=1, vocab_size=None):
         if not is_tokenized:
-            tokenized_sents = self.tokenize(sents)
+            tokenized_corpus = [self.tokenize(sentence) for sentence in corpus]
         else:
-            tokenized_sents = sents
-        self.vocab.add_tokens(tokenized_sents, min_freq, vocab_size)
+            tokenized_corpus = corpus
+        self.vocab.add_tokens(tokenized_corpus, min_freq, vocab_size)
+        return tokenized_corpus
 
     def save_vocab(self, vocab_fpath):
         with open(vocab_fpath, "w") as f:
