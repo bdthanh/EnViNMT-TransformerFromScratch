@@ -12,9 +12,8 @@ class ParallelDataset(Dataset):
         self.trg_tokenizer = trg_tokenizer
         self.src_tokenizer.build_vocab(src_dataset, is_tokenized=False, min_freq=min_freq)
         self.trg_tokenizer.build_vocab(trg_dataset, is_tokenized=False, min_freq=min_freq)
-        
-    # def tokenize_and_build_vocab(self, dataset, tokenizer: BaseTokenizer, min_freq: int = 1):
-    #     return [tokenizer.tokenize_and_build_vocab(line, is_tokenized=False, min_freq=min_freq) for line in dataset]
+        self.src_tokenized_ds = [self.src_tokenizer.tokenize(sentence) for sentence in self.src_dataset]
+        self.trg_tokenized_ds = [self.trg_tokenizer.tokenize(sentence) for sentence in self.trg_dataset]
         
     def __len__(self):
         assert len(self.src_dataset) == len(self.trg_dataset), 'Source and target dataset must have the same length'
@@ -24,9 +23,10 @@ class ParallelDataset(Dataset):
         src_text = self.src_dataset[index]
         trg_text = self.trg_dataset[index]
         
-        enc_input_tokens = self.src_tokenizer.tokenize(src_text)
+        enc_input_tokens = self.src_tokenized_ds[index]
+        dec_input_tokens = self.trg_tokenized_ds[index]
+        
         enc_input_tensor = self.src_tokenizer.vocab.sentence_to_tensor(enc_input_tokens)
-        dec_input_tokens = self.trg_tokenizer.tokenize(trg_text)
         dec_input_tensor = self.trg_tokenizer.vocab.sentence_to_tensor(dec_input_tokens)
         
         # Add sos, eos and pad to each sentence
@@ -68,7 +68,6 @@ class ParallelDataset(Dataset):
             dim=0,
         )
 
-        # Double check the size of the tensors to make sure they are all seq_len long
         assert encoder_input.size(0) == self.seq_len
         assert decoder_input.size(0) == self.seq_len
         assert label.size(0) == self.seq_len
