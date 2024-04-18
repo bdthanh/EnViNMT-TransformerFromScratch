@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import os
 import spacy
 from underthesea import word_tokenize
 from vocabulary import Vocabulary
@@ -27,13 +28,13 @@ class BaseTokenizer(ABC):
         return tokenized_corpus
 
     def save_vocab(self, vocab_fpath):
-        with open(vocab_fpath, "w") as f:
+        with open(vocab_fpath, "w", encoding='utf-8') as f:
             for token in self.vocab.token_to_id.keys(): 
                 f.write(token + ("\n"))
 
     def load_vocab(self, vocab_fpath):
         if vocab_fpath is not None:
-            with open(vocab_fpath, "r") as f:
+            with open(vocab_fpath, "r", encoding='utf-8') as f:
                 for token in f: 
                     self.vocab.add(token.rstrip("\n"))
         
@@ -72,5 +73,8 @@ if __name__ == "__main__":
     en_tokenized = en_tokenizer.tokenize(en_sentence)
     print(vi_tokenized)
     print(en_tokenized)
-        
-    
+    vi_tokenizer.build_vocab([vi_tokenized], is_tokenized=True)
+    en_tokenizer.build_vocab([en_tokenized], is_tokenized=True)
+    vi_tokenizer.save_vocab(vocab_fpath='vi.txt')
+    en_tokenizer.save_vocab(vocab_fpath='en.txt')
+                   

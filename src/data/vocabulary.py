@@ -51,3 +51,10 @@ class Vocabulary:
         for token in freq_filter_tokens:
             self.add(token)
         
+if __name__ == "__main__":
+    vocab = Vocabulary()
+    tokenized_corpus = [['I', 'am', 'a', 'student'], ['you', 'are', 'a', 'teacher']]
+    vocab.add_tokens(tokenized_corpus=tokenized_corpus, min_freq=1)
+    print(f'Token to id: {vocab.token_to_id}')
+    print(f'ID to token: {vocab.id_to_token}')
+    
