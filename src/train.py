@@ -55,6 +55,10 @@ def get_ds(config):
 
     return train_dataloader, val_dataloader, src_tokenizer, trg_tokenizer
 
+def epoch_eval(model, val_dataloader, loss_func, device):
+    model.eval()
+    pass
+
 def train(config):
     device = choose_device()
     train_dataloader, val_dataloader, src_tokenizer, trg_tokenizer = get_ds(config)
@@ -83,9 +87,9 @@ def train(config):
             optimizer.step()
             global_step += 1
       
-      #TODO: eval for each epoch with valid set
-      #TODO: integrate with wandb or tensorboard for logging
-    pass
+    #TODO: eval for each epoch with valid set
+    #TODO: integrate with wandb or tensorboard for logging
+    epoch_eval(model, val_dataloader, loss_func, device)
   
 if __name__ == '__main__':
     config = load_config()
