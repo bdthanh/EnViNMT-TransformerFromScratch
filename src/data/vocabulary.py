@@ -57,6 +57,8 @@ if __name__ == "__main__":
     vocab.add_tokens(tokenized_corpus=tokenized_corpus, min_freq=1)
     print(f'Token to id: {vocab.token_to_id}')
     print(f'ID to token: {vocab.id_to_token}')
-    print(vocab.sentence_to_tensor(['I', 'am', 'a', 'teacher']))
-    print(vocab.tensor_to_sentence(torch.tensor([4, 5, 6, 10], dtype=torch.int64)))
+    print(vocab.sentence_to_tensor(['I', 'am', 'a', 'teacher'])) # [4, 5, 6, 10]
+    print(vocab.sentence_to_tensor(['He', 'is', 'stupid'])) # Unknown token
+    print(vocab.tensor_to_sentence(torch.tensor([4, 5, 6, 10], dtype=torch.int64))) # ['I', 'am', 'a', 'teacher']
+    
     

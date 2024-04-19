@@ -1,5 +1,3 @@
-def beam_search_decode():
-    pass
-
-def greedy_decode():
+def beam_search_decode(beam_size: int = 1):
+    
     pass

@@ -9,6 +9,9 @@ class BaseTokenizer(ABC):
         self.vocab = Vocabulary()
         if vocab_fpath:
             self.load_vocab(vocab_fpath)
+            
+    def __len__(self):
+        return len(self.vocab)
 
     @abstractmethod
     def tokenize(self, sentence):

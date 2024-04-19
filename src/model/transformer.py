@@ -1,5 +1,5 @@
 from torch import Tensor
-from torch.nn import Linear, Module
+from torch.nn import Linear, Module, init
 from decoder import Decoder
 from encoder import Encoder
 
@@ -19,3 +19,13 @@ class Transformer(Module):
         x = self.linear(x_dec)
         
         return x
+      
+def get_model(config, src_tokenizer, trg_tokenizer) -> Transformer:
+    model = Transformer(src_vocab_size=len(src_tokenizer), trg_vocab_size=len(trg_tokenizer), d_model=config['d_model'],
+                        d_ff=config['d_ff'], n_heads=config['n_heads'], n_layers=config['n_layers'], dropout=config['dropout'],
+                        max_seq_len=config['max_seq_len'])
+    #TODO: Load checkpoint if have config['checkpoint_last'] file
+    for param in model.parameters():
+        if param.dim() > 1:
+            init.xavier_uniform_(param)
+    return model

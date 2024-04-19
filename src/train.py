@@ -7,21 +7,24 @@ from tqdm import tqdm
 from pathlib import Path
 
 from data.utils import load_data
-from model.transformer import Transformer
+from utils import create_if_missing_folder, load_config
+from model.transformer import Transformer, get_model
 from data.parallel_dataset import ParallelDataset, nopeak_mask
 from data.tokenizer import ViTokenizer, EnTokenizer
 
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import LambdaLR
+from torch.optim.adam import Adam
+from torch.nn import CrossEntropyLoss
 
 def choose_device():
     return 'cuda' if torch.cuda.is_available() else 'cpu'
 
 def get_ds(config):
-    train_src_dataset = load_data(path=config['data']['train']['src'], lowercase=True)
-    train_trg_dataset = load_data(path=config['data']['train']['trg'], lowercase=True)
-    valid_src_dataset = load_data(path=config['data']['valid']['src'], lowercase=True)
-    valid_trg_dataset = load_data(path=config['data']['valid']['trg'], lowercase=True)
+    train_src_dataset = load_data(path=config['train_src'], lowercase=True)
+    train_trg_dataset = load_data(path=config['train_trg'], lowercase=True)
+    valid_src_dataset = load_data(path=config['valid_src'], lowercase=True)
+    valid_trg_dataset = load_data(path=config['valid_trg'], lowercase=True)
 
     src_tokenizer = EnTokenizer()
     trg_tokenizer = ViTokenizer()
@@ -54,9 +57,39 @@ def get_ds(config):
 
 def train(config):
     device = choose_device()
+    train_dataloader, val_dataloader, src_tokenizer, trg_tokenizer = get_ds(config)
+    model = get_model(config=config, src_tokenizer=src_tokenizer, trg_tokenizer=trg_tokenizer)
+    optimizer = Adam(model.parameters(), lr=config['init_lr'], eps= 1e-10)
+    loss_func = CrossEntropyLoss(ignore_index=src_tokenizer.vocab.pad_id, label_smoothing=0.1).to(device)    
     
+    initial_epoch, global_step = 0, 0 
+    for epoch in range(initial_epoch, config['num_epochs']):
+        torch.cuda.empty_cache()
+        model.train()
+        batch_iter = tqdm(train_dataloader, desc=f"Processing Epoch {epoch:02d}", total=len(train_dataloader))
+        for batch in batch_iter:
+            optimizer.zero_grad()
+            enc_input = batch['encoder_input'].to(device)
+            dec_input = batch['decoder_input'].to(device)
+            enc_mask = batch['encoder_mask'].to(device)
+            dec_mask = batch['decoder_mask'].to(device)
+            label = batch['label'].to(device)
+
+            output = model(src=enc_input, trg=dec_input, src_mask=enc_mask, trg_mask=dec_mask)
+            
+            loss = loss_func(output.transpose(1, 2), label)
+            loss.backward()
+            batch_iter.set_postfix_str(f"Loss: {loss.item():.6f}")
+            optimizer.step()
+            global_step += 1
+      
+      #TODO: eval for each epoch with valid set
+      #TODO: integrate with wandb or tensorboard for logging
     pass
   
 if __name__ == '__main__':
-    train()
+    config = load_config()
+    create_if_missing_folder(config['checkpoint_dir'])
+    create_if_missing_folder(config['vocab_dir'])
+    train(config)
   
