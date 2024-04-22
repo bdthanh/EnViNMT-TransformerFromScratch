@@ -15,7 +15,7 @@ class MultiHeadAttention(Module):
         self.linear_concat = Linear(d_model, d_model)
         
     def forward(self, q: Tensor, k: Tensor, v: Tensor, mask: Tensor):
-        q, k, v = self.w_q(q), self.w_k(k), self.w_v(v)
+        q, k, v = self.linear_q(q), self.linear_k(k), self.linear_v(v)
         q, k, v = self._split(q), self._split(k), self._split(v)
         attn = self.sdp_attn(q, k, v, mask=mask)
         attn = self._concat(attn)
@@ -41,7 +41,7 @@ class ScaledDotProductAttention(Module):
     def __init__(self, dropout: float = 0.1) -> None:
         super().__init__()
         self.softmax = Softmax(dim=-1)
-        self.dropout = Dropout(dropout = dropout)
+        self.dropout = Dropout(p=dropout)
     
     def forward(self, q: Tensor, k: Tensor, v: Tensor, mask: Tensor):
         d_k = k.size()[-1]
