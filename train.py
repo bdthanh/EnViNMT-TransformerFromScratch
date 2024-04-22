@@ -27,13 +27,14 @@ def get_ds(config):
     valid_src_dataset = load_data(path=config['valid_src'], lowercase=True)
     valid_trg_dataset = load_data(path=config['valid_trg'], lowercase=True)
 
-    src_tokenizer = EnTokenizer()
-    trg_tokenizer = ViTokenizer()
+    src_tokenizer = EnTokenizer(config['vocab_en'])
+    trg_tokenizer = ViTokenizer(config['vocab_vi'])
     
     print(f'Building vocabulary...')
-    #TODO: Load vocab if have config['vocab_file'] to avoid re-building vocab
-    src_tokenizer.build_vocab(train_src_dataset, is_tokenized=False, min_freq=config['min_freq'])
-    trg_tokenizer.build_vocab(train_trg_dataset, is_tokenized=False, min_freq=config['min_freq'])
+    if not src_tokenizer.vocab_exist:
+        src_tokenizer.build_vocab(train_src_dataset, is_tokenized=False, min_freq=config['min_freq'])
+    if not trg_tokenizer.vocab_exist:    
+        trg_tokenizer.build_vocab(train_trg_dataset, is_tokenized=False, min_freq=config['min_freq'])
     
     train_ds = ParallelDataset(train_src_dataset, train_trg_dataset, src_tokenizer, trg_tokenizer, config['max_seq_len'])
     val_ds = ParallelDataset(valid_src_dataset, valid_trg_dataset, src_tokenizer, trg_tokenizer, config['max_seq_len'])

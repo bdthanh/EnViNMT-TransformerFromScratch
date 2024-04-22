@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import os
 import spacy
 from underthesea import word_tokenize
 from .vocabulary import Vocabulary
@@ -7,8 +8,11 @@ class BaseTokenizer(ABC):
 
     def __init__(self, vocab_fpath=None):
         self.vocab = Vocabulary()
-        if vocab_fpath:
+        self.vocab_exist = False
+        self.vocab_fpath = vocab_fpath
+        if vocab_fpath and os.path.exists(vocab_fpath):
             self.load_vocab(vocab_fpath)
+            self.vocab_exist = True
             
     def __len__(self):
         return len(self.vocab)
@@ -27,21 +31,22 @@ class BaseTokenizer(ABC):
         else:
             tokenized_corpus = corpus
         self.vocab.add_tokens(tokenized_corpus, min_freq, vocab_size)
+        self.save_vocab()
         return tokenized_corpus
 
-    def save_vocab(self, vocab_fpath):
-        with open(vocab_fpath, "w", encoding='utf-8') as f:
+    def save_vocab(self):
+        with open(self.vocab_fpath, "w", encoding='utf-8') as f:
             for token in self.vocab.token_to_id.keys(): 
                 f.write(token + ("\n"))
 
-    def load_vocab(self, vocab_fpath):
-        if vocab_fpath is not None:
-            with open(vocab_fpath, "r", encoding='utf-8') as f:
+    def load_vocab(self):
+        if self.vocab_fpath is not None:
+            with open(self.vocab_fpath, "r", encoding='utf-8') as f:
                 for token in f: 
-                    self.vocab.add(token.rstrip("\n"))
-        
+                    self.vocab.add(token.rstrip("\n"))        
 
 class ViTokenizer(BaseTokenizer):
+  
     def __init__(self, vocab_fpath=None):
         super().__init__(vocab_fpath)
 
@@ -56,6 +61,7 @@ class ViTokenizer(BaseTokenizer):
 
 
 class EnTokenizer(BaseTokenizer):
+  
     def __init__(self, vocab_fpath=None):
         super().__init__(vocab_fpath)
         self.spacy_en = spacy.load('en_core_web_sm')

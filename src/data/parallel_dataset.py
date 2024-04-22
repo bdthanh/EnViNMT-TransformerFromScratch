@@ -4,6 +4,7 @@ from torch.utils.data import Dataset
 from .tokenizer import BaseTokenizer
 
 class ParallelDataset(Dataset):
+  
     def __init__(self, src_dataset, trg_dataset, src_tokenizer: BaseTokenizer, trg_tokenizer: BaseTokenizer, seq_len: int) -> None:
         super().__init__()
         self.seq_len = seq_len

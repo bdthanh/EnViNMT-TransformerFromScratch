@@ -8,6 +8,7 @@ from .components.position_wise_feed_forward import PositionWiseFeedForward
 from .components.positional_encoding import PositionalEncoding 
 
 class Encoder(Module):
+  
     def __init__(self, vocab_size: int, d_model: int = 512, d_ff: int = 2048, n_heads: int = 8, n_layers: int = 6, 
                  dropout: float = 0.1, eps: float = 1e-10, max_seq_len: int = 256) -> None:
         super().__init__()
@@ -25,6 +26,7 @@ class Encoder(Module):
         return x  
       
 class EncoderLayer(Module):
+  
     def __init__(self, d_model: int = 512, d_ff: int = 2048, n_heads: int = 8, dropout: float = 0.1, 
                  eps: float = 1e-10) -> None:
         super().__init__()

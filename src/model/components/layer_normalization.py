@@ -3,6 +3,7 @@ from torch import nn
 from torch.nn import Module
 
 class LayerNormalization(Module):
+  
     def __init__(self, d_model: int = 512, eps: float = 1e-10):
         super().__init__()
         self.eps = eps
