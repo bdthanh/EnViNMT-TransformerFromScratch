@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import os
 import spacy
+from tqdm import tqdm
 from underthesea import word_tokenize
 from .vocabulary import Vocabulary
 
@@ -26,8 +27,10 @@ class BaseTokenizer(ABC):
         pass
 
     def build_vocab(self, corpus, is_tokenized=False, min_freq=1, vocab_size=None):
+        tokenized_corpus = []
         if not is_tokenized:
-            tokenized_corpus = [self.tokenize(sentence) for sentence in corpus]
+            for sentence in tqdm(corpus):
+                tokenized_corpus.append(self.tokenize(sentence))
         else:
             tokenized_corpus = corpus
         self.vocab.add_tokens(tokenized_corpus, min_freq, vocab_size)
@@ -46,7 +49,7 @@ class BaseTokenizer(ABC):
                     self.vocab.add(token.rstrip("\n"))        
 
 class ViTokenizer(BaseTokenizer):
-  
+    #TODO: Try other tokenizers for Vietnamese, underthesea gives bad tokens (PyVi or WordLevel)
     def __init__(self, vocab_fpath=None):
         super().__init__(vocab_fpath)
 

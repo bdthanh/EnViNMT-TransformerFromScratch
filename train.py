@@ -22,8 +22,8 @@ def choose_device():
 
 def get_ds(config):
     print(f'Loading dataset...')
-    train_src_dataset = load_data(path=config['train_src'], lowercase=True)
-    train_trg_dataset = load_data(path=config['train_trg'], lowercase=True)
+    train_src_dataset = load_data(path=config['train_src'], lowercase=True) # max_len = 786
+    train_trg_dataset = load_data(path=config['train_trg'], lowercase=True) # max_len = 788
     valid_src_dataset = load_data(path=config['valid_src'], lowercase=True)
     valid_trg_dataset = load_data(path=config['valid_trg'], lowercase=True)
 
@@ -38,22 +38,7 @@ def get_ds(config):
     
     train_ds = ParallelDataset(train_src_dataset, train_trg_dataset, src_tokenizer, trg_tokenizer, config['max_seq_len'])
     val_ds = ParallelDataset(valid_src_dataset, valid_trg_dataset, src_tokenizer, trg_tokenizer, config['max_seq_len'])
-
-    # Find the maximum length of each sentence in the source and target sentence
-    max_len_src = 0
-    max_len_tgt = 0
-
-    assert len(train_src_dataset) == len(train_trg_dataset), 'Source and target dataset must have the same length'
     
-    for i in range(len(train_src_dataset)):
-        src_ids = src_tokenizer.tokenize(train_src_dataset[i])
-        tgt_ids = trg_tokenizer.tokenize(train_trg_dataset[i])
-        max_len_src = max(max_len_src, len(src_ids))
-        max_len_tgt = max(max_len_tgt, len(tgt_ids))
-
-    print(f'Max length of source sentence: {max_len_src}')
-    print(f'Max length of target sentence: {max_len_tgt}')
-
     train_dataloader = DataLoader(train_ds, batch_size=config['batch_size'], shuffle=True)
     val_dataloader = DataLoader(val_ds, batch_size=1, shuffle=True)
 
