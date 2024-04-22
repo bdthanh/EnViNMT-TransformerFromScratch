@@ -12,6 +12,7 @@ class Transformer(Module):
                                dropout=dropout, eps=eps, max_seq_len=max_seq_len)
         self.decoder = Decoder(vocab_size=trg_vocab_size, d_model=d_model, d_ff=d_ff, n_heads=n_heads, n_layers=n_layers, 
                                dropout=dropout, eps=eps, max_seq_len=max_seq_len)
+        #TODO: Check if this linear layer is necessary
         self.linear = Linear(d_model, trg_vocab_size)
         
     def forward(self, src: Tensor, trg: Tensor, src_mask: Tensor, trg_mask: Tensor): 

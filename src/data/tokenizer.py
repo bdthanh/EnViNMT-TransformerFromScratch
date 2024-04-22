@@ -12,7 +12,7 @@ class BaseTokenizer(ABC):
         self.vocab_exist = False
         self.vocab_fpath = vocab_fpath
         if vocab_fpath and os.path.exists(vocab_fpath):
-            self.load_vocab(vocab_fpath)
+            self.load_vocab()
             self.vocab_exist = True
             
     def __len__(self):
