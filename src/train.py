@@ -7,6 +7,7 @@ from tqdm import tqdm
 from pathlib import Path
 
 from data.utils import load_data
+from data.tokenizer import BaseTokenizer
 from utils import create_if_missing_folder, load_config
 from model.transformer import Transformer, get_model
 from data.parallel_dataset import ParallelDataset, nopeak_mask
@@ -55,9 +56,29 @@ def get_ds(config):
 
     return train_dataloader, val_dataloader, src_tokenizer, trg_tokenizer
 
-def epoch_eval(model, val_dataloader, loss_func, device):
+def epoch_eval(model: Transformer, val_dataloader, enc_mask, src_tokenizer: BaseTokenizer, trg_tokenizer: BaseTokenizer, max_seq_len, device):
     model.eval()
-    pass
+    sos_id = trg_tokenizer.vocab.sos_id
+    eos_id = trg_tokenizer.vocab.eos_id
+    with torch.no_grad():
+        for batch in val_dataloader:
+            enc_input = batch['encoder_input'].to(device)
+            enc_mask = batch['encoder_mask'].to(device)
+            src_text = batch['src_text'][0]
+            trg_text = batch['trg_text'][0]
+
+            enc_output = model.encoder(enc_input, enc_mask)
+            dec_input = torch.full((1, 1), sos_id, dtype=enc_input.dtype, device=device)
+            next_token = ''
+            while dec_input.size(1) != max_seq_len and next_token != eos_id:
+                dec_mask = nopeak_mask(dec_input.size(1)).type_as(enc_mask).to(device)
+                dec_output = model.decoder(dec_input, enc_output, enc_mask, dec_mask)
+                prob = model.linear(dec_output[:, -1]) 
+                _, next_token = torch.max(prob, dim=1)
+                dec_input = torch.cat([
+                    dec_input, torch.full((1, 1), next_token.item(), dtype=enc_input.dtype, device=device)
+                ], dim=1)
+    return dec_input.squeeze(0)
 
 def train(config):
     device = choose_device()
@@ -65,7 +86,7 @@ def train(config):
     model = get_model(config=config, src_tokenizer=src_tokenizer, trg_tokenizer=trg_tokenizer)
     optimizer = Adam(model.parameters(), lr=config['init_lr'], eps= 1e-10)
     loss_func = CrossEntropyLoss(ignore_index=src_tokenizer.vocab.pad_id, label_smoothing=0.1).to(device)    
-    
+    max_seq_len = config['max_seq_len']
     initial_epoch, global_step = 0, 0 
     for epoch in range(initial_epoch, config['num_epochs']):
         torch.cuda.empty_cache()
@@ -86,14 +107,13 @@ def train(config):
             batch_iter.set_postfix_str(f"Loss: {loss.item():.6f}")
             optimizer.step()
             global_step += 1
-      
-    #TODO: eval for each epoch with valid set
-    #TODO: integrate with wandb or tensorboard for logging
-    epoch_eval(model, val_dataloader, loss_func, device)
+
+        epoch_eval(model, val_dataloader, enc_mask, src_tokenizer, trg_tokenizer, max_seq_len, device)
   
 if __name__ == '__main__':
     config = load_config()
     create_if_missing_folder(config['checkpoint_dir'])
     create_if_missing_folder(config['vocab_dir'])
+    wandb.init(project='en_vi_nmt', config=config)
     train(config)
   
