@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import spacy
 from underthesea import word_tokenize
-from vocabulary import Vocabulary
+from .vocabulary import Vocabulary
 
 class BaseTokenizer(ABC):
 

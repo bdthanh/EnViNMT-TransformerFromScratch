@@ -6,12 +6,11 @@ import torch
 from tqdm import tqdm
 from pathlib import Path
 
-from data.utils import load_data
-from data.tokenizer import BaseTokenizer
-from utils import create_if_missing_folder, load_config
-from model.transformer import Transformer, get_model
-from data.parallel_dataset import ParallelDataset, nopeak_mask
-from data.tokenizer import ViTokenizer, EnTokenizer
+from src.data.utils import load_data
+from src.data.tokenizer import BaseTokenizer, EnTokenizer, ViTokenizer
+from src.data.parallel_dataset import ParallelDataset, nopeak_mask
+from src.utils import create_if_missing_folder, load_config
+from src.model.transformer import Transformer, get_model
 
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import LambdaLR
@@ -22,6 +21,7 @@ def choose_device():
     return 'cuda' if torch.cuda.is_available() else 'cpu'
 
 def get_ds(config):
+    print(f'Loading dataset...')
     train_src_dataset = load_data(path=config['train_src'], lowercase=True)
     train_trg_dataset = load_data(path=config['train_trg'], lowercase=True)
     valid_src_dataset = load_data(path=config['valid_src'], lowercase=True)
@@ -29,12 +29,14 @@ def get_ds(config):
 
     src_tokenizer = EnTokenizer()
     trg_tokenizer = ViTokenizer()
-
+    
+    print(f'Building vocabulary...')
+    #TODO: Load vocab if have config['vocab_file'] to avoid re-building vocab
     src_tokenizer.build_vocab(train_src_dataset, is_tokenized=False, min_freq=config['min_freq'])
     trg_tokenizer.build_vocab(train_trg_dataset, is_tokenized=False, min_freq=config['min_freq'])
     
-    train_ds = ParallelDataset(train_src_dataset, train_trg_dataset, src_tokenizer, trg_tokenizer, config['seq_len'])
-    val_ds = ParallelDataset(valid_src_dataset, valid_trg_dataset, src_tokenizer, trg_tokenizer, config['seq_len'])
+    train_ds = ParallelDataset(train_src_dataset, train_trg_dataset, src_tokenizer, trg_tokenizer, config['max_seq_len'])
+    val_ds = ParallelDataset(valid_src_dataset, valid_trg_dataset, src_tokenizer, trg_tokenizer, config['max_seq_len'])
 
     # Find the maximum length of each sentence in the source and target sentence
     max_len_src = 0
@@ -73,7 +75,7 @@ def epoch_eval(model: Transformer, val_dataloader, enc_mask, src_tokenizer: Base
             while dec_input.size(1) != max_seq_len and next_token != eos_id:
                 dec_mask = nopeak_mask(dec_input.size(1)).type_as(enc_mask).to(device)
                 dec_output = model.decoder(dec_input, enc_output, enc_mask, dec_mask)
-                prob = model.linear(dec_output[:, -1]) 
+                prob = model.linear(dec_output[:, -1]) # [:, -1] for the last token
                 _, next_token = torch.max(prob, dim=1)
                 dec_input = torch.cat([
                     dec_input, torch.full((1, 1), next_token.item(), dtype=enc_input.dtype, device=device)
@@ -88,6 +90,8 @@ def train(config):
     loss_func = CrossEntropyLoss(ignore_index=src_tokenizer.vocab.pad_id, label_smoothing=0.1).to(device)    
     max_seq_len = config['max_seq_len']
     initial_epoch, global_step = 0, 0 
+    #TODO: Load checkpoint if have config['checkpoint_last'] file
+    print(f'_________ START TRAINING __________')
     for epoch in range(initial_epoch, config['num_epochs']):
         torch.cuda.empty_cache()
         model.train()
@@ -109,11 +113,17 @@ def train(config):
             global_step += 1
 
         epoch_eval(model, val_dataloader, enc_mask, src_tokenizer, trg_tokenizer, max_seq_len, device)
+        
+        #TODO: Save checkpoint after each epoch
   
 if __name__ == '__main__':
-    config = load_config()
+    current_file_path = Path(__file__).resolve() 
+    current_dir = current_file_path.parent 
+    config_path = current_dir / 'config.yaml'
+    config = load_config(config_path)
     create_if_missing_folder(config['checkpoint_dir'])
     create_if_missing_folder(config['vocab_dir'])
-    wandb.init(project='en_vi_nmt', config=config)
+    # wandb.init(project='en_vi_nmt', config=config)
     train(config)
+    # wandb.finish()
   

@@ -1,7 +1,7 @@
 from torch import Tensor
 from torch.nn import Linear, Module, init
-from decoder import Decoder
-from encoder import Encoder
+from .decoder import Decoder
+from .encoder import Encoder
 
 class Transformer(Module):
     def __init__(self, src_vocab_size: int, trg_vocab_size: int, d_model: int = 512, d_ff: int = 2048, n_heads: int = 8, n_layers: int = 6, 
