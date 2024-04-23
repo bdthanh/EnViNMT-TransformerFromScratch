@@ -15,4 +15,4 @@ tqdm==4.66.2
 pandas==2.2.1
 pyyaml==6.0.1
 underthesea==6.8.0
-fastapi==0.70.0
+fastapi==0.110.2
