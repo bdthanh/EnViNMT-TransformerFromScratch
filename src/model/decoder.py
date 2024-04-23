@@ -16,16 +16,13 @@ class Decoder(Module):
         self.pos_encoding = PositionalEncoding(max_seq_len=max_seq_len, d_model=d_model, dropout=dropout)
         single_layer = DecoderLayer(d_model=d_model, d_ff=d_ff, n_heads=n_heads, dropout=dropout, eps=eps)
         self.decoder_layers = ModuleList([deepcopy(single_layer) for _ in range(n_layers)])
-        #TODO: Check if this linear layer is necessary
-        self.linear = Linear(d_model, vocab_size)
         
     def forward(self, trg: Tensor, x_enc: Tensor, src_mask: Tensor, trg_mask: Tensor):
         x = self.embedding(trg)
         x = self.pos_encoding(x)
         for layer in self.decoder_layers:
             x = layer(x, x_enc, src_mask, trg_mask)
-        x = self.linear(x)
-        
+                    
         return x 
       
 class DecoderLayer(Module):
