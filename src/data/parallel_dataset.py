@@ -40,9 +40,9 @@ class ParallelDataset(Dataset):
         # Add <sos> and <eos> token
         encoder_input = torch.cat(
             [
-                self.src_tokenizer.vocab.sos_id,
+                torch.tensor([self.src_tokenizer.vocab.sos_id], dtype=torch.int64),
                 enc_input_tensor,
-                self.src_tokenizer.vocab.eos_id,
+                torch.tensor([self.src_tokenizer.vocab.eos_id], dtype=torch.int64),
                 torch.tensor([self.src_tokenizer.vocab.pad_id] * enc_num_padding_tokens, dtype=torch.int64),
             ],
             dim=0,
@@ -51,7 +51,7 @@ class ParallelDataset(Dataset):
         # Add only <sos> token
         decoder_input = torch.cat(
             [
-                self.trg_tokenizer.vocab.sos_id,
+                torch.tensor([self.trg_tokenizer.vocab.sos_id], dtype=torch.int64),
                 dec_input_tensor,
                 torch.tensor([self.trg_tokenizer.vocab.pad_id] * dec_num_padding_tokens, dtype=torch.int64),
             ],
@@ -62,7 +62,7 @@ class ParallelDataset(Dataset):
         label = torch.cat(
             [
                 dec_input_tensor,
-                self.trg_tokenizer.vocab.eos_id,
+                torch.tensor([self.trg_tokenizer.vocab.eos_id], dtype=torch.int64),
                 torch.tensor([self.trg_tokenizer.vocab.pad_id] * dec_num_padding_tokens, dtype=torch.int64),
             ],
             dim=0,

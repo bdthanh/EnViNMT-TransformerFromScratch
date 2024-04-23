@@ -18,6 +18,6 @@ class PositionalEncoding(Module):
         self.dropout = Dropout(p=dropout)
         
     def forward(self, x: Tensor):
-        _, seq_len = x.size()
+        _, seq_len, _ = x.size() # [batch_size, seq_len, d_model]
         x = x + self.positional_encoding[:, :seq_len]
         return self.dropout(x)

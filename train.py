@@ -3,6 +3,7 @@ warnings.filterwarnings("ignore")
 import os
 import wandb
 import torch
+import torchmetrics
 from tqdm import tqdm
 from pathlib import Path
 
@@ -11,6 +12,7 @@ from src.data.tokenizer import BaseTokenizer, EnTokenizer, ViTokenizer
 from src.data.parallel_dataset import ParallelDataset, nopeak_mask
 from src.utils import create_if_missing_folder, load_config
 from src.model.transformer import Transformer, get_model
+from src.output_decode import beam_search_decode
 
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import LambdaLR
@@ -44,10 +46,11 @@ def get_ds(config):
 
     return train_dataloader, val_dataloader, src_tokenizer, trg_tokenizer
 
-def epoch_eval(model: Transformer, val_dataloader, enc_mask, src_tokenizer: BaseTokenizer, trg_tokenizer: BaseTokenizer, max_seq_len, device):
+def epoch_eval(model: Transformer, global_step: int, val_dataloader: DataLoader, enc_mask, src_tokenizer: BaseTokenizer, trg_tokenizer: BaseTokenizer, max_seq_len, device):
     model.eval()
     sos_id = trg_tokenizer.vocab.sos_id
     eos_id = trg_tokenizer.vocab.eos_id
+    target_list, pred_list = [], []
     with torch.no_grad():
         for batch in val_dataloader:
             enc_input = batch['encoder_input'].to(device)
@@ -58,6 +61,8 @@ def epoch_eval(model: Transformer, val_dataloader, enc_mask, src_tokenizer: Base
             enc_output = model.encoder(enc_input, enc_mask)
             dec_input = torch.full((1, 1), sos_id, dtype=enc_input.dtype, device=device)
             next_token = ''
+            
+            #TODO: Implement beam search instead of greedy search
             while dec_input.size(1) != max_seq_len and next_token != eos_id:
                 dec_mask = nopeak_mask(dec_input.size(1)).type_as(enc_mask).to(device)
                 dec_output = model.decoder(dec_input, enc_output, enc_mask, dec_mask)
@@ -65,8 +70,24 @@ def epoch_eval(model: Transformer, val_dataloader, enc_mask, src_tokenizer: Base
                 _, next_token = torch.max(prob, dim=1)
                 dec_input = torch.cat([
                     dec_input, torch.full((1, 1), next_token.item(), dtype=enc_input.dtype, device=device)
-                ], dim=1)
-    return dec_input.squeeze(0)
+                ], dim=1).unsqueeze(0)
+
+            pred_sent = trg_tokenizer.vocab.tensor_to_sentence(dec_input)
+            target_list.append(trg_text)
+            pred_list.append(pred_sent)
+            
+    char_error_rate = torchmetrics.CharErrorRate()
+    cer_score = char_error_rate(pred_list, target_list)
+    # wandb.log({'validation/cer': cer_score, 'global_step': global_step})
+
+    word_error_rate = torchmetrics.WordErrorRate()
+    wer_score = word_error_rate(pred_list, target_list)
+    # wandb.log({'validation/wer': wer_score, 'global_step': global_step})
+
+    bleu = torchmetrics.BLEUScore()
+    bleu_score = bleu(pred_list, target_list)
+    # wandb.log({'validation/BLEU': bleu_score, 'global_step': global_step})
+            
 
 def train(config):
     device = choose_device()
@@ -98,7 +119,7 @@ def train(config):
             optimizer.step()
             global_step += 1
 
-        epoch_eval(model, val_dataloader, enc_mask, src_tokenizer, trg_tokenizer, max_seq_len, device)
+        epoch_eval(model, global_step, val_dataloader, enc_mask, src_tokenizer, trg_tokenizer, max_seq_len, device)
         
         #TODO: Save checkpoint after each epoch
   
