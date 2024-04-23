@@ -76,6 +76,7 @@ def epoch_eval(model: Transformer, global_step: int, val_dataloader: DataLoader,
             target_list.append(trg_text)
             pred_list.append(pred_sent)
             
+            
     char_error_rate = torchmetrics.CharErrorRate()
     cer_score = char_error_rate(pred_list, target_list)
     # wandb.log({'validation/cer': cer_score, 'global_step': global_step})
