@@ -34,7 +34,6 @@ def get_ds(config):
     src_tokenizer = EnTokenizer(config['vocab_en'])
     trg_tokenizer = ViTokenizer(config['vocab_vi'])
     
-    print(f'Building vocabulary...')
     if not src_tokenizer.vocab_exist:
         src_tokenizer.build_vocab(train_src_dataset, is_tokenized=False, min_freq=config['min_freq'])
     if not trg_tokenizer.vocab_exist:    

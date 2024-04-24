@@ -18,9 +18,7 @@ class ParallelDataset(Dataset):
         self.new_src_dataset  = []
         self.new_trg_dataset  = []
         assert len(self.src_dataset) == len(self.trg_dataset), 'Source and target dataset must have the same length'
-        for i in tqdm(range(len(self.src_dataset))):
-            src_sentence = self.src_dataset[i]
-            trg_sentence = self.trg_dataset[i]
+        for src_sentence, trg_sentence in tqdm(zip(self.src_dataset, self.trg_dataset), desc='Tokenizing dataset'):
             tokenized_src = self.src_tokenizer.tokenize(src_sentence)
             tokenized_trg = self.trg_tokenizer.tokenize(trg_sentence)
             if len(tokenized_src) < 255 and len(tokenized_trg) < 255: 
