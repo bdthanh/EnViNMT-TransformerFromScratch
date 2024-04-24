@@ -73,7 +73,7 @@ def epoch_eval(model: Transformer, global_step: int, val_dataloader: DataLoader,
                     dec_input, torch.full((1, 1), next_token.item(), dtype=enc_input.dtype, device=device)
                 ], dim=1)
 
-            pred_sent = trg_tokenizer.tensor_to_sentence(dec_input)
+            pred_sent = trg_tokenizer.tensor_to_sentence(dec_input[0])
             target_list.append(trg_text)
             pred_list.append(pred_sent)
             

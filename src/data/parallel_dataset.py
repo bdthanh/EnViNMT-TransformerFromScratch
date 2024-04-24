@@ -97,5 +97,5 @@ class ParallelDataset(Dataset):
         }
         
 def nopeak_mask(size):
-    mask = torch.triu(torch.ones((1, 1, size, size)), dtype=torch.bool).type(torch.int)
+    mask = torch.triu(torch.ones((1, size, size)), diagonal=1).type(torch.int)
     return mask == 0
