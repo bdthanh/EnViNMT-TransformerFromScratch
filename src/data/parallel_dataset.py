@@ -1,5 +1,6 @@
 import torch
 from typing import Any
+from tqdm import tqdm
 from torch.utils.data import Dataset
 from .tokenizer import BaseTokenizer
 
@@ -12,8 +13,16 @@ class ParallelDataset(Dataset):
         self.trg_dataset = trg_dataset
         self.src_tokenizer = src_tokenizer
         self.trg_tokenizer = trg_tokenizer
-        self.src_tokenized_ds = [self.src_tokenizer.tokenize(sentence) for sentence in self.src_dataset]
-        self.trg_tokenized_ds = [self.trg_tokenizer.tokenize(sentence) for sentence in self.trg_dataset]
+        self.src_tokenized_ds = []
+        self.trg_tokenized_ds = []
+        for i in range(len(self)):
+            src_sentence = self.src_dataset[i]
+            trg_sentence = self.trg_dataset[i]
+            tokenized_src = self.src_tokenizer.tokenize(src_sentence)
+            tokenized_trg = self.trg_tokenizer.tokenize(trg_sentence)
+            if len(tokenized_src) < 255 and len(tokenized_trg) < 255: 
+                self.src_tokenized_ds.append(tokenized_src)
+                self.trg_tokenized_ds.append(tokenized_trg)
         
     def __len__(self):
         assert len(self.src_dataset) == len(self.trg_dataset), 'Source and target dataset must have the same length'
@@ -29,7 +38,6 @@ class ParallelDataset(Dataset):
         enc_input_tensor = self.src_tokenizer.vocab.sentence_to_tensor(enc_input_tokens)
         dec_input_tensor = self.trg_tokenizer.vocab.sentence_to_tensor(dec_input_tokens)
         
-        # Add sos, eos and pad to each sentence
         enc_num_padding_tokens = self.seq_len - len(enc_input_tokens) - 2  # We will add <sos> and <eos>
         dec_num_padding_tokens = self.seq_len - len(dec_input_tokens) - 1  # We will only add <sos>
       
