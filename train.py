@@ -20,7 +20,9 @@ from torch.optim.adam import Adam
 from torch.nn import CrossEntropyLoss
 
 def choose_device():
-    return 'cuda' if torch.cuda.is_available() else 'cpu'
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    print(f'Using device: {device}')
+    return torch.device(device)
 
 def get_ds(config):
     print(f'Loading dataset...')
@@ -92,8 +94,9 @@ def epoch_eval(model: Transformer, global_step: int, val_dataloader: DataLoader,
 
 def train(config):
     device = choose_device()
+    
     train_dataloader, val_dataloader, src_tokenizer, trg_tokenizer = get_ds(config)
-    model = get_model(config=config, src_tokenizer=src_tokenizer, trg_tokenizer=trg_tokenizer)
+    model = get_model(config=config, src_tokenizer=src_tokenizer, trg_tokenizer=trg_tokenizer).to(device)
     optimizer = Adam(model.parameters(), lr=config['init_lr'], eps= 1e-10)
     loss_func = CrossEntropyLoss(ignore_index=src_tokenizer.vocab.pad_id, label_smoothing=0.1).to(device)    
     max_seq_len = config['max_seq_len']
