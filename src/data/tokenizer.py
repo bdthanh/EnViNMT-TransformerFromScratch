@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 import os
 import spacy
+import torch
+from typing import List
 from tqdm import tqdm
 from underthesea import word_tokenize
 from .vocabulary import Vocabulary
@@ -47,7 +49,19 @@ class BaseTokenizer(ABC):
         if self.vocab_fpath is not None:
             with open(self.vocab_fpath, "r", encoding='utf-8') as f:
                 for token in f: 
-                    self.vocab.add(token.rstrip("\n"))        
+                    self.vocab.add(token.rstrip("\n"))     
+ 
+    def sentence_to_tensor(self, tokenized_sent: List[str]):
+        return torch.tensor(list(map(lambda token: self.vocab[token], tokenized_sent)), dtype=torch.int64)
+      
+    def corpus_to_tensors(self, tokenized_corpus):
+        return [self.sentence_to_tensor(sentence) for sentence in tokenized_corpus]
+    
+    def tensor_to_sentence(self, tensor):
+        return self.detokenize(list(map(lambda id: self.vocab.id_to_token[id.item()], tensor)))
+      
+    def tensors_to_corpus(self, tensors):
+        return [self.tensor_to_sentence(tensor) for tensor in tensors]   
 
 class ViTokenizer(BaseTokenizer):
     #TODO: Try other tokenizers for Vietnamese, underthesea gives bad tokens (PyVi or WordLevel)

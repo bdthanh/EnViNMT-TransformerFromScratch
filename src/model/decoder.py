@@ -44,7 +44,7 @@ class DecoderLayer(Module):
         
     def forward(self, x: Tensor, x_enc: Tensor, src_mask: Tensor, trg_mask: Tensor):
         _x = self.masked_self_attn(x, x, x, trg_mask)
-        x = self.masked_self_attn_layer_norm(x+ self.masked_self_attn_dropout(_x))
+        x = self.masked_self_attn_layer_norm(x + self.masked_self_attn_dropout(_x))
         
         if x_enc is not None:
             _x = self.masked_self_attn(q=x, k=x_enc, v=x_enc, mask=src_mask)

@@ -9,7 +9,7 @@ from pathlib import Path
 
 from src.data.utils import load_data
 from src.data.tokenizer import BaseTokenizer, EnTokenizer, ViTokenizer
-from src.data.parallel_dataset import ParallelDataset, nopeak_mask
+from src.data.parallel_dataset import ParallelDataset, nopeak_mask 
 from src.utils import create_if_missing_folder, load_config
 from src.model.transformer import Transformer, get_model
 from src.output_decode import beam_search_decode
@@ -71,9 +71,9 @@ def epoch_eval(model: Transformer, global_step: int, val_dataloader: DataLoader,
                 _, next_token = torch.max(prob, dim=1)
                 dec_input = torch.cat([
                     dec_input, torch.full((1, 1), next_token.item(), dtype=enc_input.dtype, device=device)
-                ], dim=1).unsqueeze(0)
+                ], dim=1)
 
-            pred_sent = trg_tokenizer.vocab.tensor_to_sentence(dec_input)
+            pred_sent = trg_tokenizer.tensor_to_sentence(dec_input)
             target_list.append(trg_text)
             pred_list.append(pred_sent)
             

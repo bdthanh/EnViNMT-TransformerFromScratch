@@ -18,7 +18,7 @@ class ParallelDataset(Dataset):
         self.new_src_dataset  = []
         self.new_trg_dataset  = []
         assert len(self.src_dataset) == len(self.trg_dataset), 'Source and target dataset must have the same length'
-        for src_sentence, trg_sentence in tqdm(zip(self.src_dataset, self.trg_dataset), desc='Tokenizing dataset'):
+        for src_sentence, trg_sentence in tqdm(zip(self.src_dataset, self.trg_dataset), desc='Tokenizing dataset', total=len(self.src_dataset)):
             tokenized_src = self.src_tokenizer.tokenize(src_sentence)
             tokenized_trg = self.trg_tokenizer.tokenize(trg_sentence)
             if len(tokenized_src) < 255 and len(tokenized_trg) < 255: 
@@ -97,5 +97,5 @@ class ParallelDataset(Dataset):
         }
         
 def nopeak_mask(size):
-    mask = torch.triu(torch.ones((1, size, size)), diagonal=1).type(torch.int)
+    mask = torch.triu(torch.ones((1, 1, size, size)), dtype=torch.bool).type(torch.int)
     return mask == 0
