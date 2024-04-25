@@ -10,7 +10,7 @@ from pathlib import Path
 from src.data.utils import load_data
 from src.data.tokenizer import BaseTokenizer, EnTokenizer, ViTokenizer
 from src.data.parallel_dataset import ParallelDataset, nopeak_mask 
-from src.utils import create_if_missing_folder, load_config
+from src.utils import create_if_missing_folder, load_config, is_file_exist
 from src.model.transformer import Transformer, get_model
 from src.output_decode import beam_search_decode
 
@@ -72,12 +72,11 @@ def epoch_eval(model: Transformer, global_step: int, val_dataloader: DataLoader,
                 dec_input = torch.cat([
                     dec_input, torch.full((1, 1), next_token.item(), dtype=enc_input.dtype, device=device)
                 ], dim=1)
-
-            pred_sent = trg_tokenizer.tensor_to_sentence(dec_input[0])
+            pred_sent = trg_tokenizer.tensor_to_sentence(dec_input[0, 1:-1]) # remove sos and eos tokens
             target_list.append(trg_text)
             pred_list.append(pred_sent)
             
-            
+    #TODO: Integrate with wandb and check metrics for each epoch        
     char_error_rate = torchmetrics.CharErrorRate()
     cer_score = char_error_rate(pred_list, target_list)
     # wandb.log({'validation/cer': cer_score, 'global_step': global_step})
@@ -93,7 +92,6 @@ def epoch_eval(model: Transformer, global_step: int, val_dataloader: DataLoader,
 
 def train(config):
     device = choose_device()
-    
     train_dataloader, val_dataloader, src_tokenizer, trg_tokenizer = get_ds(config)
     model = get_model(config=config, src_tokenizer=src_tokenizer, trg_tokenizer=trg_tokenizer).to(device)
     optimizer = Adam(model.parameters(), lr=config['init_lr'], eps= 1e-10)

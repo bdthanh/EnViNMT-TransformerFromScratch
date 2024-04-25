@@ -25,7 +25,6 @@ def get_model(config, src_tokenizer, trg_tokenizer) -> Transformer:
     model = Transformer(src_vocab_size=len(src_tokenizer), trg_vocab_size=len(trg_tokenizer), d_model=config['d_model'],
                         d_ff=config['d_ff'], n_heads=config['n_heads'], n_layers=config['n_layers'], dropout=config['dropout'],
                         max_seq_len=config['max_seq_len'])
-    #TODO: Load checkpoint if have config['checkpoint_last'] file
     for param in model.parameters():
         if param.dim() > 1:
             init.xavier_uniform_(param)

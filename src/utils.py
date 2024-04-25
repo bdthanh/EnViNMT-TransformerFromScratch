@@ -14,6 +14,9 @@ def create_if_missing_folder(path: str):
     if not os.path.exists(path):
         os.makedirs(path)
         
+def is_file_exist(path: str):
+    return os.path.exists(path)
+        
 def load_config(path):
     with open(path, "r") as f:
         config = yaml.safe_load(f)

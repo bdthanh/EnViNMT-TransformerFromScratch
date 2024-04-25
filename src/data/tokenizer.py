@@ -25,9 +25,8 @@ class BaseTokenizer(ABC):
     def tokenize(self, sentence):
         pass
     
-    @abstractmethod
     def detokenize(self, tokens):
-        pass
+        return " ".join(tokens)
 
     def build_vocab(self, corpus, is_tokenized=False, min_freq=1, vocab_size=None):
         tokenized_corpus = []
@@ -73,10 +72,6 @@ class ViTokenizer(BaseTokenizer):
             return list()
         else:
             return word_tokenize(sentence)
-        
-    def detokenize(self, tokens):
-        return " ".join(tokens)
-
 
 class EnTokenizer(BaseTokenizer):
   
@@ -86,9 +81,6 @@ class EnTokenizer(BaseTokenizer):
 
     def tokenize(self, sentence):
         return [tok.text for tok in self.spacy_en.tokenizer(sentence)]
-    
-    def detokenize(self, tokens):
-        return " ".join(tokens)
       
 if __name__ == "__main__":
     vi_sentence = "Nó là một trò chơi ghép hình vẫn đang được xếp"
