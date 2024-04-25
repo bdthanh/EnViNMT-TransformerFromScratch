@@ -65,18 +65,20 @@ def get_ds(config):
 
     return train_dataloader, val_dataloader, src_tokenizer, trg_tokenizer
 
-def epoch_eval(model: Transformer, global_step: int, val_dataloader: DataLoader, enc_mask, src_tokenizer: BaseTokenizer, trg_tokenizer: BaseTokenizer, max_seq_len, device):
+def epoch_eval(model: Transformer, loss: CrossEntropyLoss, global_step: int, val_dataloader: DataLoader, enc_mask, 
+               src_tokenizer: BaseTokenizer, trg_tokenizer: BaseTokenizer, max_seq_len, device):
     model.eval()
     sos_id = trg_tokenizer.vocab.sos_id
     eos_id = trg_tokenizer.vocab.eos_id
     target_list, pred_list = [], []
+    epoch_loss = 0  
     with torch.no_grad():
         for batch in val_dataloader:
             enc_input = batch['encoder_input'].to(device)
             enc_mask = batch['encoder_mask'].to(device)
             src_text = batch['src_text'][0]
             trg_text = batch['trg_text'][0]
-
+            label = batch['label'].to(device)
             enc_output = model.encoder(enc_input, enc_mask)
             dec_input = torch.full((1, 1), sos_id, dtype=enc_input.dtype, device=device)
             next_token = ''
@@ -90,9 +92,14 @@ def epoch_eval(model: Transformer, global_step: int, val_dataloader: DataLoader,
                 dec_input = torch.cat([
                     dec_input, torch.full((1, 1), next_token.item(), dtype=enc_input.dtype, device=device)
                 ], dim=1)
+                
+            epoch_loss += loss(prob.transpose(1, 2), label)
             pred_sent = trg_tokenizer.tensor_to_sentence(dec_input[0, 1:-1]) # remove sos and eos tokens
             target_list.append(trg_text)
             pred_list.append(pred_sent)
+            print(f"Source: {src_text}")
+            print(f"Target: {trg_text}")
+            print(f"Predicted: {pred_sent}")
             
     #TODO: Integrate with wandb and check metrics for each epoch        
     char_error_rate = torchmetrics.CharErrorRate()
@@ -106,6 +113,11 @@ def epoch_eval(model: Transformer, global_step: int, val_dataloader: DataLoader,
     bleu = torchmetrics.BLEUScore()
     bleu_score = bleu(pred_list, target_list)
     # wandb.log({'validation/BLEU': bleu_score, 'global_step': global_step})
+    
+    loss_score = epoch_loss/len(val_dataloader)
+    # wandb.log({'validation/loss': loss_score, 'global_step': global_step})
+    
+    return loss_score
             
 
 def train(config):
@@ -117,7 +129,7 @@ def train(config):
     max_seq_len = config['max_seq_len']
     initial_epoch, global_step = 0, 0 
     model, optimizer, initial_epoch, global_step = load_checkpoint_if_exists(config['checkpoint_last'], model, optimizer)
-        
+    best_loss = float('inf')
     print(f'_________ START TRAINING __________')
     for epoch in range(initial_epoch, config['num_epochs']):
         torch.cuda.empty_cache()
@@ -139,9 +151,11 @@ def train(config):
             optimizer.step()
             global_step += 1
 
-        epoch_eval(model, global_step, val_dataloader, enc_mask, src_tokenizer, trg_tokenizer, max_seq_len, device)
+        valid_loss = epoch_eval(model, loss_func, global_step, val_dataloader, enc_mask, src_tokenizer, trg_tokenizer, max_seq_len, device)
         save_checkpoint(config['checkpoint_last'], model, optimizer, epoch, global_step)
-        #TODO: Save best checkpoint to config['checkpoint_best']
+        if valid_loss < best_loss:
+            best_loss = valid_loss
+            save_checkpoint(config['checkpoint_best'], model, optimizer, epoch, global_step)
     print(f'_________ END TRAINING __________')
         
   
