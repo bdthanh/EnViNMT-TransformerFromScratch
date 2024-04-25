@@ -71,7 +71,7 @@ def epoch_eval(model: Transformer, loss: CrossEntropyLoss, global_step: int, val
     model.eval()
     sos_id = trg_tokenizer.vocab.sos_id
     eos_id = trg_tokenizer.vocab.eos_id
-    target_list, pred_list = [], []
+    target_list, pred_list, prob_list = [], [], []
     epoch_loss = 0  
     with torch.no_grad():
         for batch in val_dataloader:
@@ -89,12 +89,13 @@ def epoch_eval(model: Transformer, loss: CrossEntropyLoss, global_step: int, val
                 dec_mask = nopeak_mask(dec_input.size(1)).type_as(enc_mask).to(device)
                 dec_output = model.decoder(dec_input, enc_output, enc_mask, dec_mask)
                 prob = model.linear(dec_output[:, -1]) # [:, -1] for the last token
+                prob_list.append(prob.unsqueeze(1))
                 _, next_token = torch.max(prob, dim=1)
                 dec_input = torch.cat([
                     dec_input, torch.full((1, 1), next_token.item(), dtype=enc_input.dtype, device=device)
                 ], dim=1)
-                
-            epoch_loss += loss(prob.transpose(1, 2), label)
+            probs = torch.cat(prob_list, dim=1)    
+            epoch_loss += loss(probs.transpose(1, 2), label)
             pred_sent = trg_tokenizer.tensor_to_sentence(dec_input[0, 1:-1]) # remove sos and eos tokens
             target_list.append(trg_text)
             pred_list.append(pred_sent)
