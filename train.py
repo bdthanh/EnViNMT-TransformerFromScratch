@@ -33,6 +33,7 @@ def save_checkpoint(path, model, optimizer, epoch, global_step):
     }, path)
     
 def load_checkpoint_if_exists(path, model, optimizer):
+    initial_epoch, global_step = 0, 0
     if is_file_exist(path):
         checkpoint = torch.load(config['checkpoint_last'])
         model.load_state_dict(checkpoint['model_state_dict'])
@@ -101,21 +102,20 @@ def epoch_eval(model: Transformer, loss: CrossEntropyLoss, global_step: int, val
             print(f"Target: {trg_text}")
             print(f"Predicted: {pred_sent}")
             
-    #TODO: Integrate with wandb and check metrics for each epoch        
     char_error_rate = torchmetrics.CharErrorRate()
     cer_score = char_error_rate(pred_list, target_list)
-    # wandb.log({'validation/cer': cer_score, 'global_step': global_step})
+    wandb.log({'validation/cer': cer_score, 'global_step': global_step})
 
     word_error_rate = torchmetrics.WordErrorRate()
     wer_score = word_error_rate(pred_list, target_list)
-    # wandb.log({'validation/wer': wer_score, 'global_step': global_step})
+    wandb.log({'validation/wer': wer_score, 'global_step': global_step})
 
     bleu = torchmetrics.BLEUScore()
     bleu_score = bleu(pred_list, target_list)
-    # wandb.log({'validation/BLEU': bleu_score, 'global_step': global_step})
+    wandb.log({'validation/BLEU': bleu_score, 'global_step': global_step})
     
     loss_score = epoch_loss/len(val_dataloader)
-    # wandb.log({'validation/loss': loss_score, 'global_step': global_step})
+    wandb.log({'validation/loss': loss_score, 'global_step': global_step})
     
     return loss_score
             
@@ -130,6 +130,11 @@ def train(config):
     initial_epoch, global_step = 0, 0 
     model, optimizer, initial_epoch, global_step = load_checkpoint_if_exists(config['checkpoint_last'], model, optimizer)
     best_loss = float('inf')
+    
+    wandb.define_metric("global_step")
+    wandb.define_metric("validation/*", step_metric="global_step")
+    wandb.define_metric("train/*", step_metric="global_step")
+    
     print(f'_________ START TRAINING __________')
     for epoch in range(initial_epoch, config['num_epochs']):
         torch.cuda.empty_cache()
@@ -147,6 +152,7 @@ def train(config):
             
             loss = loss_func(output.transpose(1, 2), label)
             loss.backward()
+            wandb.log({'train/loss': loss.item(), 'global_step': global_step})
             batch_iter.set_postfix_str(f"Loss: {loss.item():.6f}")
             optimizer.step()
             global_step += 1
@@ -157,7 +163,6 @@ def train(config):
             best_loss = valid_loss
             save_checkpoint(config['checkpoint_best'], model, optimizer, epoch, global_step)
     print(f'_________ END TRAINING __________')
-        
   
 if __name__ == '__main__':
     current_file_path = Path(__file__).resolve() 
@@ -166,7 +171,7 @@ if __name__ == '__main__':
     config = load_config(config_path)
     create_if_missing_folder(config['checkpoint_dir'])
     create_if_missing_folder(config['vocab_dir'])
-    # wandb.init(project='en_vi_nmt', config=config)
+    wandb.init(project='en_vi_nmt', config=config)
     train(config)
-    # wandb.finish()
+    wandb.finish()
   
