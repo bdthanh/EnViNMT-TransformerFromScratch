@@ -23,6 +23,24 @@ def choose_device():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     print(f'Using device: {device}')
     return torch.device(device)
+  
+def save_checkpoint(path, model, optimizer, epoch, global_step):
+    torch.save({
+        'epoch': epoch,
+        'global_step': global_step,
+        'model_state_dict': model.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict()
+    }, path)
+    
+def load_checkpoint_if_exists(path, model, optimizer):
+    if is_file_exist(path):
+        checkpoint = torch.load(config['checkpoint_last'])
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        initial_epoch = checkpoint['epoch'] + 1
+        global_step = checkpoint['global_step']
+        print(f'Loaded checkpoint from epoch {initial_epoch}')
+    return model, optimizer, initial_epoch, global_step
 
 def get_ds(config):
     print(f'Loading dataset...')
@@ -98,7 +116,8 @@ def train(config):
     loss_func = CrossEntropyLoss(ignore_index=src_tokenizer.vocab.pad_id, label_smoothing=0.1).to(device)    
     max_seq_len = config['max_seq_len']
     initial_epoch, global_step = 0, 0 
-    #TODO: Load checkpoint if have config['checkpoint_last'] file
+    model, optimizer, initial_epoch, global_step = load_checkpoint_if_exists(config['checkpoint_last'], model, optimizer)
+        
     print(f'_________ START TRAINING __________')
     for epoch in range(initial_epoch, config['num_epochs']):
         torch.cuda.empty_cache()
@@ -121,14 +140,8 @@ def train(config):
             global_step += 1
 
         epoch_eval(model, global_step, val_dataloader, enc_mask, src_tokenizer, trg_tokenizer, max_seq_len, device)
-        
-        torch.save({
-            'epoch': epoch,
-            'global_step': global_step,
-            'model_state_dict': model.state_dict(),
-            'optimizer_state_dict': optimizer.state_dict(),
-            'loss': loss,
-        }, config['checkpoint_last'])
+        save_checkpoint(config['checkpoint_last'], model, optimizer, epoch, global_step)
+        #TODO: Save best checkpoint to config['checkpoint_best']
     print(f'_________ END TRAINING __________')
         
   
