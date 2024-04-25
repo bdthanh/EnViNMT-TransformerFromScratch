@@ -66,15 +66,17 @@ def get_ds(config):
 
     return train_dataloader, val_dataloader, src_tokenizer, trg_tokenizer
 
-def epoch_eval(model: Transformer, loss: CrossEntropyLoss, global_step: int, val_dataloader: DataLoader, enc_mask, 
-               src_tokenizer: BaseTokenizer, trg_tokenizer: BaseTokenizer, max_seq_len, device):
+def epoch_eval(model: Transformer, loss: CrossEntropyLoss, global_step: int, epoch: int, val_dataloader: DataLoader, 
+               enc_mask, src_tokenizer: BaseTokenizer, trg_tokenizer: BaseTokenizer, max_seq_len, device):
     model.eval()
     sos_id = trg_tokenizer.vocab.sos_id
     eos_id = trg_tokenizer.vocab.eos_id
-    target_list, pred_list, prob_list = [], [], []
+    target_list, pred_list = [], []
     epoch_loss = 0  
+    batch_iter = tqdm(val_dataloader, desc=f"Processing Epoch {epoch:02d}", total=len(val_dataloader))
     with torch.no_grad():
-        for batch in val_dataloader:
+        for batch in batch_iter:
+            prob_list = []
             enc_input = batch['encoder_input'].to(device)
             enc_mask = batch['encoder_mask'].to(device)
             src_text = batch['src_text'][0]
@@ -85,7 +87,7 @@ def epoch_eval(model: Transformer, loss: CrossEntropyLoss, global_step: int, val
             next_token = ''
             
             #TODO: Implement beam search instead of greedy search
-            while dec_input.size(1) != max_seq_len and next_token != eos_id:
+            while dec_input.size(1) != max_seq_len+1 and next_token != eos_id:
                 dec_mask = nopeak_mask(dec_input.size(1)).type_as(enc_mask).to(device)
                 dec_output = model.decoder(dec_input, enc_output, enc_mask, dec_mask)
                 prob = model.linear(dec_output[:, -1]) # [:, -1] for the last token
@@ -158,7 +160,7 @@ def train(config):
             optimizer.step()
             global_step += 1
 
-        valid_loss = epoch_eval(model, loss_func, global_step, val_dataloader, enc_mask, src_tokenizer, trg_tokenizer, max_seq_len, device)
+        valid_loss = epoch_eval(model, loss_func, global_step, epoch, val_dataloader, enc_mask, src_tokenizer, trg_tokenizer, max_seq_len, device)
         save_checkpoint(config['checkpoint_last'], model, optimizer, epoch, global_step)
         if valid_loss < best_loss:
             best_loss = valid_loss
