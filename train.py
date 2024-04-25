@@ -122,7 +122,15 @@ def train(config):
 
         epoch_eval(model, global_step, val_dataloader, enc_mask, src_tokenizer, trg_tokenizer, max_seq_len, device)
         
-        #TODO: Save checkpoint after each epoch
+        torch.save({
+            'epoch': epoch,
+            'global_step': global_step,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'loss': loss,
+        }, config['checkpoint_last'])
+    print(f'_________ END TRAINING __________')
+        
   
 if __name__ == '__main__':
     current_file_path = Path(__file__).resolve() 
