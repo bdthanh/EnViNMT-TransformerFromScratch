@@ -76,7 +76,6 @@ def epoch_eval(model: Transformer, loss: CrossEntropyLoss, global_step: int, epo
     batch_iter = tqdm(val_dataloader, desc=f"Processing Epoch {epoch:02d}", total=len(val_dataloader))
     with torch.no_grad():
         for batch in batch_iter:
-            prob_list = []
             enc_input = batch['encoder_input'].to(device)
             enc_mask = batch['encoder_mask'].to(device)
             src_text = batch['src_text'][0]
@@ -91,13 +90,10 @@ def epoch_eval(model: Transformer, loss: CrossEntropyLoss, global_step: int, epo
                 dec_mask = nopeak_mask(dec_input.size(1)).type_as(enc_mask).to(device)
                 dec_output = model.decoder(dec_input, enc_output, enc_mask, dec_mask)
                 prob = model.linear(dec_output[:, -1]) # [:, -1] for the last token
-                prob_list.append(prob.unsqueeze(1))
                 _, next_token = torch.max(prob, dim=1)
                 dec_input = torch.cat([
                     dec_input, torch.full((1, 1), next_token.item(), dtype=enc_input.dtype, device=device)
                 ], dim=1)
-            probs = torch.cat(prob_list, dim=1)    
-            epoch_loss += loss(probs.transpose(1, 2), label)
             pred_sent = trg_tokenizer.tensor_to_sentence(dec_input[0, 1:-1]) # remove sos and eos tokens
             target_list.append(trg_text)
             pred_list.append(pred_sent)
@@ -115,13 +111,7 @@ def epoch_eval(model: Transformer, loss: CrossEntropyLoss, global_step: int, epo
 
     bleu = torchmetrics.BLEUScore()
     bleu_score = bleu(pred_list, target_list)
-    wandb.log({'validation/BLEU': bleu_score, 'global_step': global_step})
-    
-    loss_score = epoch_loss/len(val_dataloader)
-    wandb.log({'validation/loss': loss_score, 'global_step': global_step})
-    
-    return loss_score
-            
+    wandb.log({'validation/BLEU': bleu_score, 'global_step': global_step})            
 
 def train(config):
     device = choose_device()
@@ -160,11 +150,8 @@ def train(config):
             optimizer.step()
             global_step += 1
 
-        valid_loss = epoch_eval(model, loss_func, global_step, epoch, val_dataloader, enc_mask, src_tokenizer, trg_tokenizer, max_seq_len, device)
+        epoch_eval(model, loss_func, global_step, epoch, val_dataloader, enc_mask, src_tokenizer, trg_tokenizer, max_seq_len, device)
         save_checkpoint(config['checkpoint_last'], model, optimizer, epoch, global_step)
-        if valid_loss < best_loss:
-            best_loss = valid_loss
-            save_checkpoint(config['checkpoint_best'], model, optimizer, epoch, global_step)
     print(f'_________ END TRAINING __________')
   
 if __name__ == '__main__':
