@@ -72,7 +72,7 @@ def epoch_eval(model: Transformer, global_step: int, epoch: int, val_dataloader:
     sos_id = trg_tokenizer.vocab.sos_id
     eos_id = trg_tokenizer.vocab.eos_id
     source_list, target_list, pred_list = [], [], []
-    batch_iter = tqdm(val_dataloader, desc=f"Evaluating Epoch {epoch:02d}" total=len(val_dataloader))
+    batch_iter = tqdm(val_dataloader, desc=f"Evaluating Epoch {epoch:02d}", total=len(val_dataloader))
     with torch.no_grad():
         for batch in batch_iter:
             enc_input = batch['encoder_input'].to(device)
