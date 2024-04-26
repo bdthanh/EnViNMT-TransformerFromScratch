@@ -96,9 +96,11 @@ def epoch_eval(model: Transformer, global_step: int, val_dataloader: DataLoader,
             pred_sent = trg_tokenizer.tensor_to_sentence(dec_input[0, 1:-1]) # remove sos and eos tokens
             target_list.append(trg_text)
             pred_list.append(pred_sent)
-            print(f"Source: {src_text}")
-            print(f"Target: {trg_text}")
-            print(f"Predicted: {pred_sent}")
+            with open('output.txt', 'a') as f:
+                f.write(f"Source: {src_text}\n")
+                f.write(f"Target: {trg_text}\n")
+                f.write(f"Predicted: {pred_sent}\n")
+                f.write("====================================\n")
             
     char_error_rate = torchmetrics.CharErrorRate()
     cer_score = char_error_rate(pred_list, target_list)

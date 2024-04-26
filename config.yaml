@@ -18,6 +18,8 @@ vocab_dir: "vocab"
 vocab_en: "vocab/en_vocab.txt"
 vocab_vi: "vocab/vi_vocab.txt"
     
+
+
 # vocabulary options
 min_freq: 1
 vocab_size: null
