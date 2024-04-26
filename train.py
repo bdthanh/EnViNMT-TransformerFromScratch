@@ -71,7 +71,7 @@ def epoch_eval(model: Transformer, global_step: int, val_dataloader: DataLoader,
     model.eval()
     sos_id = trg_tokenizer.vocab.sos_id
     eos_id = trg_tokenizer.vocab.eos_id
-    target_list, pred_list = [], []
+    source_list, target_list, pred_list = [], [], []
     batch_iter = tqdm(val_dataloader, total=len(val_dataloader))
     with torch.no_grad():
         for batch in batch_iter:
@@ -96,11 +96,13 @@ def epoch_eval(model: Transformer, global_step: int, val_dataloader: DataLoader,
             pred_sent = trg_tokenizer.tensor_to_sentence(dec_input[0, 1:-1]) # remove sos and eos tokens
             target_list.append(trg_text)
             pred_list.append(pred_sent)
-            with open('output.txt', 'a') as f:
+        with open('output.txt', 'a') as f:
+            for src_text, trg_text, pred_text in zip(source_list, target_list, pred_list):
                 f.write(f"Source: {src_text}\n")
                 f.write(f"Target: {trg_text}\n")
-                f.write(f"Predicted: {pred_sent}\n")
+                f.write(f"Predicted: {pred_text}\n")
                 f.write("====================================\n")
+            f.write("********************************************************************************************************************************************\n")
             
     char_error_rate = torchmetrics.CharErrorRate()
     cer_score = char_error_rate(pred_list, target_list)
