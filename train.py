@@ -66,13 +66,13 @@ def get_ds(config):
 
     return train_dataloader, val_dataloader, src_tokenizer, trg_tokenizer
 
-def epoch_eval(model: Transformer, global_step: int, val_dataloader: DataLoader, 
+def epoch_eval(model: Transformer, global_step: int, epoch: int, val_dataloader: DataLoader, 
                enc_mask, src_tokenizer: BaseTokenizer, trg_tokenizer: BaseTokenizer, max_seq_len, device):
     model.eval()
     sos_id = trg_tokenizer.vocab.sos_id
     eos_id = trg_tokenizer.vocab.eos_id
     source_list, target_list, pred_list = [], [], []
-    batch_iter = tqdm(val_dataloader, total=len(val_dataloader))
+    batch_iter = tqdm(val_dataloader, desc=f"Evaluating Epoch {epoch:02d}" total=len(val_dataloader))
     with torch.no_grad():
         for batch in batch_iter:
             enc_input = batch['encoder_input'].to(device)
@@ -94,8 +94,10 @@ def epoch_eval(model: Transformer, global_step: int, val_dataloader: DataLoader,
                     dec_input, torch.full((1, 1), next_token.item(), dtype=enc_input.dtype, device=device)
                 ], dim=1)
             pred_sent = trg_tokenizer.tensor_to_sentence(dec_input[0, 1:-1]) # remove sos and eos tokens
+            source_list.append(src_text)
             target_list.append(trg_text)
             pred_list.append(pred_sent)
+          
         with open('output.txt', 'a') as f:
             for src_text, trg_text, pred_text in zip(source_list, target_list, pred_list):
                 f.write(f"Source: {src_text}\n")
@@ -153,7 +155,7 @@ def train(config):
             optimizer.step()
             global_step += 1
 
-        epoch_eval(model, global_step, val_dataloader, enc_mask, src_tokenizer, trg_tokenizer, max_seq_len, device)
+        epoch_eval(model, global_step, epoch, val_dataloader, enc_mask, src_tokenizer, trg_tokenizer, max_seq_len, device)
         save_checkpoint(config['checkpoint_last'], model, optimizer, epoch, global_step)
     print(f'_________ END TRAINING __________')
   
