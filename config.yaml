@@ -8,10 +8,10 @@ test_trg: "data/tst2012.vi"
 
 # checkpoint
 checkpoint_dir: "checkpoints"
-checkpoint_best: "checkpoint_best.pt"
-checkpoint_last: "checkpoint_last.pt"
-checkpoint_results: "results.csv"
-dataloaders: "dataloaders.pt"
+checkpoint_best: "checkpoints/checkpoint_best.pt"
+checkpoint_last: "checkpoints/checkpoint_last.pt"
+checkpoint_results: "checkpoints/results.csv"
+dataloaders: "checkpoints/dataloaders.pt"
 
 # vocab
 vocab_dir: "vocab"
@@ -26,7 +26,7 @@ vocab_size: null
 
 # training hyperparameters
 batch_size: 32
-num_epochs: 10
+num_epochs: 20
 
 # model architecture
 d_model: 256

@@ -1,0 +1,1 @@
+This folder stores the latest training checkpoint. However, checkpoint file are too big and are not allowed to upload to GitHub.
