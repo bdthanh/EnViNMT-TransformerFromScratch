@@ -17,8 +17,6 @@ dataloaders: "checkpoints/dataloaders.pt"
 vocab_dir: "vocab"
 vocab_en: "vocab/en_vocab.txt"
 vocab_vi: "vocab/vi_vocab.txt"
-    
-
 
 # vocabulary options
 min_freq: 1
@@ -33,7 +31,7 @@ d_model: 256
 d_ff: 512
 max_seq_len: 256
 n_heads: 8
-n_layers: 4
+n_layers: 2
 dropout: 0.1
 
 # optimizer
