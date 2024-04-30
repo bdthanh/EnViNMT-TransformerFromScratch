@@ -31,7 +31,7 @@ d_model: 256
 d_ff: 512
 max_seq_len: 256
 n_heads: 8
-n_layers: 2
+n_layers: 3
 dropout: 0.1
 
 # optimizer

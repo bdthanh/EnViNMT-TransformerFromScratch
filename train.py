@@ -1,6 +1,5 @@
 import warnings
 warnings.filterwarnings("ignore")
-import os
 import wandb
 import torch
 import torchmetrics
@@ -35,7 +34,7 @@ def save_checkpoint(path, model, optimizer, epoch, global_step):
 def load_checkpoint_if_exists(path, model, optimizer):
     initial_epoch, global_step = 0, 0
     if is_file_exist(path):
-        checkpoint = torch.load(config['checkpoint_last'])
+        checkpoint = torch.load(path)
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         initial_epoch = checkpoint['epoch'] + 1
