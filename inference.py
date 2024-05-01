@@ -1,23 +1,12 @@
 import warnings
 warnings.filterwarnings("ignore")
-import os
-import wandb
 import torch
-import torchmetrics
-from tqdm import tqdm
 from pathlib import Path
 
-from src.data.utils import load_data
-from src.data.tokenizer import BaseTokenizer, EnTokenizer, ViTokenizer
-from src.data.parallel_dataset import ParallelDataset, nopeak_mask 
-from src.utils import create_if_missing_folder, load_config, is_file_exist
+from src.data.tokenizer import EnTokenizer, ViTokenizer, BaseTokenizer
+from src.data.parallel_dataset import nopeak_mask 
+from src.utils import load_config, is_file_exist
 from src.model.transformer import Transformer, get_model
-from src.output_decode import beam_search_decode
-
-from torch.utils.data import DataLoader
-from torch.optim.lr_scheduler import LambdaLR
-from torch.optim.adam import Adam
-from torch.nn import CrossEntropyLoss
 
 def choose_device():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -53,7 +42,7 @@ def set_up_necessary_objects():
     model.eval()
     return model, src_tokenizer, trg_tokenizer, device, config
 
-def translate(input_sentence: str, config, model, src_tokenizer, trg_tokenizer, device):
+def translate(input_sentence: str, config, model: Transformer, src_tokenizer: BaseTokenizer, trg_tokenizer: BaseTokenizer, device):
     sos_id = trg_tokenizer.vocab.sos_id
     eos_id = trg_tokenizer.vocab.eos_id
     with torch.no_grad():
