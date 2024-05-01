@@ -38,11 +38,13 @@ def set_up_necessary_objects():
     config = load_config(config_path)
     src_tokenizer, trg_tokenizer = get_tokenizers(config) 
     model = get_model(config=config, src_tokenizer=src_tokenizer, trg_tokenizer=trg_tokenizer).to(device)
+    print(f'Loading model weights...')
     model = load_latest_checkpoint(config, model, device)
     model.eval()
     return model, src_tokenizer, trg_tokenizer, device, config
 
 def translate(input_sentence: str, config, model: Transformer, src_tokenizer: BaseTokenizer, trg_tokenizer: BaseTokenizer, device):
+    input_sentence = input_sentence.lower()
     sos_id = trg_tokenizer.vocab.sos_id
     eos_id = trg_tokenizer.vocab.eos_id
     with torch.no_grad():
