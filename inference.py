@@ -4,7 +4,7 @@ import torch
 from pathlib import Path
 
 from src.data.tokenizer import EnTokenizer, ViTokenizer, BaseTokenizer
-from src.data.parallel_dataset import nopeak_mask 
+from src.data.parallel_dataset import nopeek_mask 
 from src.utils import load_config, is_file_exist
 from src.model.transformer import Transformer, get_model
 
@@ -66,7 +66,7 @@ def translate(input_sentence: str, config, model: Transformer, src_tokenizer: Ba
             dec_input = torch.full((1, 1), sos_id, dtype=enc_input.dtype, device=device)
             next_token = ''
             while dec_input.size(1) != config['max_seq_len']+1 and next_token != eos_id:
-                dec_mask = nopeak_mask(dec_input.size(1)).type_as(enc_mask).to(device)
+                dec_mask = nopeek_mask(dec_input.size(1)).type_as(enc_mask).to(device)
                 dec_output = model.decoder(dec_input, enc_output, enc_mask, dec_mask)
                 prob = model.linear(dec_output[:, -1]) # [:, -1] for the last token
                 _, next_token = torch.max(prob, dim=1)

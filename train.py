@@ -8,7 +8,7 @@ from pathlib import Path
 
 from src.data.utils import load_data
 from src.data.tokenizer import BaseTokenizer, EnTokenizer, ViTokenizer
-from src.data.parallel_dataset import ParallelDataset, nopeak_mask 
+from src.data.parallel_dataset import ParallelDataset, nopeek_mask 
 from src.utils import create_if_missing_folder, load_config, is_file_exist
 from src.model.transformer import Transformer, get_model
 from src.output_decode import beam_search_decode
@@ -85,7 +85,7 @@ def epoch_eval(model: Transformer, global_step: int, epoch: int, val_dataloader:
             
             #TODO: Implement beam search instead of greedy search
             while dec_input.size(1) != max_seq_len+1 and next_token != eos_id:
-                dec_mask = nopeak_mask(dec_input.size(1)).type_as(enc_mask).to(device)
+                dec_mask = nopeek_mask(dec_input.size(1)).type_as(enc_mask).to(device)
                 dec_output = model.decoder(dec_input, enc_output, enc_mask, dec_mask)
                 prob = model.linear(dec_output[:, -1]) # [:, -1] for the last token
                 _, next_token = torch.max(prob, dim=1)

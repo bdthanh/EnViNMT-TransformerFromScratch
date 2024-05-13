@@ -27,7 +27,7 @@ class MultiHeadAttention(Module):
         batch_size, length, _ = x.size()
         assert self.d_model % self.n_heads == 0, "Division of d_model to n_heads has remainder"
         d_head = self.d_model // self.n_heads
-        x = x.view(batch_size, length, self.n_heads, d_head).transpose(1, 2)
+        x = x.contiguous().view(batch_size, length, self.n_heads, d_head).transpose(1, 2)
       
         return x   
       

@@ -93,9 +93,9 @@ class ParallelDataset(Dataset):
             'decoder_input': decoder_input,
             'label': label,
             'encoder_mask': (encoder_input != self.src_tokenizer.vocab.pad_id).unsqueeze(0).unsqueeze(0).int(), # (1, 1, seq_len)
-            'decoder_mask': (decoder_input != self.trg_tokenizer.vocab.pad_id).unsqueeze(0).int() & nopeak_mask(decoder_input.size(0)), # (1, seq_len) & (1, seq_len, seq_len),
+            'decoder_mask': (decoder_input != self.trg_tokenizer.vocab.pad_id).unsqueeze(0).int() & nopeek_mask(decoder_input.size(0)), # (1, seq_len) & (1, seq_len, seq_len),
         }
         
-def nopeak_mask(size):
+def nopeek_mask(size):
     mask = torch.triu(torch.ones((1, size, size)), diagonal=1).type(torch.int)
     return mask == 0
